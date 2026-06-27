@@ -7,14 +7,14 @@ import {
   workCategory,
   workSeries,
   workStatus,
-  workSummary
-} from "../../utils/works";
+  workSummary,
+} from "../../utils/works.ts";
 
 import { EmbedBuilder } from "discord.js";
 import dayjs from "dayjs";
-import { getWork } from "@bobaboard/ao3.js";
-import { getWorkDetailsFromUrl } from "@bobaboard/ao3.js/urls";
-import localizedFormat from "dayjs/plugin/localizedFormat";
+import { getWork } from "@fujocoded/ao3.js";
+import { getWorkDetailsFromUrl } from "@fujocoded/ao3.js/urls";
+import localizedFormat from "dayjs/plugin/localizedFormat.js";
 
 // Extends dayjs to offer localized date formats.
 dayjs.extend(localizedFormat);
@@ -30,7 +30,7 @@ export var worksEmbed = async (workURL: string) => {
     let color = await embedColor(workURL);
 
     let creators = await allAuthors(workURL);
-		let series = await workSeries(workURL);
+    let series = await workSeries(workURL);
 
     let wordCount = work.words.toString();
     let chapters = await chapterDisplay(workURL);
@@ -40,10 +40,10 @@ export var worksEmbed = async (workURL: string) => {
     let status = await workStatus(workURL);
 
     let rating = await ratingIcon(workURL);
-		let warnings = work.tags.warnings.join(", ");
-		let category = await workCategory(workURL);
+    let warnings = work.tags.warnings.join(", ");
+    let category = await workCategory(workURL);
 
-		let summary = await workSummary(workURL);
+    let summary = await workSummary(workURL);
 
     // TODO: add series and collections to description.
     let description = `by ${creators!}\n${series!}`;
@@ -59,7 +59,7 @@ export var worksEmbed = async (workURL: string) => {
       .setTitle(work.title)
       .setURL(workURL)
       .setDescription(description)
-			.addFields({ name: "Words:", value: wordCount, inline: true })
+      .addFields({ name: "Words:", value: wordCount, inline: true })
       .addFields({ name: "Chapters:", value: chapters, inline: true })
       .addFields({ name: "Language:", value: work.language, inline: true })
 
@@ -75,7 +75,7 @@ export var worksEmbed = async (workURL: string) => {
       .addFields({ name: "Warnings:", value: warnings, inline: true })
       .addFields({ name: "Category:", value: category, inline: true })
 
-			.addFields({ name: "Summary:", value: summary!, inline: false })
+      .addFields({ name: "Summary:", value: summary!, inline: false })
 
       .setTimestamp()
       .setFooter({
