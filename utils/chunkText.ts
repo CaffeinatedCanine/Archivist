@@ -13,7 +13,11 @@ export function chunkText(text: string, maxLength = 1024): string[] {
 
 // chunkText, but a too-short trailing chunk gets folded into the one before
 // it instead of becoming its own near-empty final page.
-export function chunkTextMerged(text: string, maxLength: number, mergeThreshold = 250): string[] {
+export function chunkTextMerged(
+  text: string,
+  maxLength: number,
+  mergeThreshold = 250,
+): string[] {
   const chunks = chunkText(text, maxLength);
   if (chunks.length >= 2 && chunks[chunks.length - 1].length < mergeThreshold) {
     const last = chunks.pop()!;

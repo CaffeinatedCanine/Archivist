@@ -54,7 +54,10 @@ function emptyBundle(guildId: string): GuildSettingsBundle {
 // seconds. Writes call invalidateBundle() so the admin who just changed
 // something always sees it immediately, rather than waiting out the TTL.
 const BUNDLE_TTL_MS = 30_000;
-const bundleCache = new Map<string, { data: GuildSettingsBundle; expiresAt: number }>();
+const bundleCache = new Map<
+  string,
+  { data: GuildSettingsBundle; expiresAt: number }
+>();
 
 function invalidateBundle(guildId: string): void {
   bundleCache.delete(guildId);
@@ -68,11 +71,21 @@ async function fetchBundle(guildId: string): Promise<GuildSettingsBundle> {
   if (!guild) return emptyBundle(guildId);
 
   const [work, chapter, series, user, tags] = await Promise.all([
-    db.query.workFieldSettings.findFirst({ where: eq(workFieldSettings.guildSettingsId, guild.id) }),
-    db.query.chapterFieldSettings.findFirst({ where: eq(chapterFieldSettings.guildSettingsId, guild.id) }),
-    db.query.seriesFieldSettings.findFirst({ where: eq(seriesFieldSettings.guildSettingsId, guild.id) }),
-    db.query.userFieldSettings.findFirst({ where: eq(userFieldSettings.guildSettingsId, guild.id) }),
-    db.query.blockedTags.findMany({ where: eq(blockedTags.guildSettingsId, guild.id) }),
+    db.query.workFieldSettings.findFirst({
+      where: eq(workFieldSettings.guildSettingsId, guild.id),
+    }),
+    db.query.chapterFieldSettings.findFirst({
+      where: eq(chapterFieldSettings.guildSettingsId, guild.id),
+    }),
+    db.query.seriesFieldSettings.findFirst({
+      where: eq(seriesFieldSettings.guildSettingsId, guild.id),
+    }),
+    db.query.userFieldSettings.findFirst({
+      where: eq(userFieldSettings.guildSettingsId, guild.id),
+    }),
+    db.query.blockedTags.findMany({
+      where: eq(blockedTags.guildSettingsId, guild.id),
+    }),
   ]);
 
   return {
@@ -106,7 +119,9 @@ export async function getGuildSettingsBundle(
 // before either has a row yet) can't race into a duplicate-key error.
 // Exported for redirects.ts, which needs the id but not any of the
 // field-setting tables above.
-export async function getOrCreateGuildSettingsId(guildId: string): Promise<number> {
+export async function getOrCreateGuildSettingsId(
+  guildId: string,
+): Promise<number> {
   await db
     .insert(guildSettings)
     .values({ guildId })
@@ -115,13 +130,16 @@ export async function getOrCreateGuildSettingsId(guildId: string): Promise<numbe
   const row = await db.query.guildSettings.findFirst({
     where: eq(guildSettings.guildId, guildId),
   });
-  if (!row) throw new Error(`Failed to create guild_settings row for guild ${guildId}`);
+  if (!row)
+    throw new Error(`Failed to create guild_settings row for guild ${guildId}`);
   return row.id;
 }
 
 export async function updateGuildSettings(
   guildId: string,
-  values: Partial<Omit<GuildSettingsRow, "id" | "guildId" | "createdAt" | "updatedAt">>,
+  values: Partial<
+    Omit<GuildSettingsRow, "id" | "guildId" | "createdAt" | "updatedAt">
+  >,
 ): Promise<void> {
   const id = await getOrCreateGuildSettingsId(guildId);
   await db.update(guildSettings).set(values).where(eq(guildSettings.id, id));
@@ -176,11 +194,18 @@ export async function updateUserFieldSettings(
   invalidateBundle(guildId);
 }
 
-export async function replaceBlockedTags(guildId: string, tags: string[]): Promise<void> {
+export async function replaceBlockedTags(
+  guildId: string,
+  tags: string[],
+): Promise<void> {
   const guildSettingsId = await getOrCreateGuildSettingsId(guildId);
-  await db.delete(blockedTags).where(eq(blockedTags.guildSettingsId, guildSettingsId));
+  await db
+    .delete(blockedTags)
+    .where(eq(blockedTags.guildSettingsId, guildSettingsId));
   if (tags.length > 0) {
-    await db.insert(blockedTags).values(tags.map((tag) => ({ guildSettingsId, tag })));
+    await db
+      .insert(blockedTags)
+      .values(tags.map((tag) => ({ guildSettingsId, tag })));
   }
   invalidateBundle(guildId);
 }
@@ -190,11 +215,20 @@ export async function getGuildsWithOutageAlertsEnabled(): Promise<
   { guildId: string; channelId: string }[]
 > {
   const rows = await db.query.guildSettings.findMany({
-    where: and(eq(guildSettings.outageAlertsEnabled, true), isNotNull(guildSettings.outageAlertChannelId)),
+    where: and(
+      eq(guildSettings.outageAlertsEnabled, true),
+      isNotNull(guildSettings.outageAlertChannelId),
+    ),
     columns: { guildId: true, outageAlertChannelId: true },
   });
 
   return rows
-    .filter((row): row is typeof row & { outageAlertChannelId: string } => row.outageAlertChannelId !== null)
-    .map((row) => ({ guildId: row.guildId, channelId: row.outageAlertChannelId }));
+    .filter(
+      (row): row is typeof row & { outageAlertChannelId: string } =>
+        row.outageAlertChannelId !== null,
+    )
+    .map((row) => ({
+      guildId: row.guildId,
+      channelId: row.outageAlertChannelId,
+    }));
 }

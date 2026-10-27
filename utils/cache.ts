@@ -1,4 +1,10 @@
-import { getSeries, getUser, getWork, getWorkContent, setFetcher } from "@fujocoded/ao3.js";
+import {
+  getSeries,
+  getUser,
+  getWork,
+  getWorkContent,
+  setFetcher,
+} from "@fujocoded/ao3.js";
 import { recordAo3Request, recordCacheHit, recordError } from "./cacheStats.ts";
 
 import { ao3Limiter } from "./ao3Limiter.ts";
@@ -167,7 +173,11 @@ export const workContentCache = new Cache<WorkContentData>(HOUR_MS, "content");
 export const userCache = new Cache<UserData>(THREE_HOURS_MS, "user");
 
 // Retries a failed request with growing backoff (1.5s, then 3s).
-async function withRetry<T>(loader: () => Promise<T>, attempts = 3, baseDelayMs = 1500): Promise<T> {
+async function withRetry<T>(
+  loader: () => Promise<T>,
+  attempts = 3,
+  baseDelayMs = 1500,
+): Promise<T> {
   for (let attempt = 1; ; attempt++) {
     try {
       return await loader();
@@ -175,7 +185,9 @@ async function withRetry<T>(loader: () => Promise<T>, attempts = 3, baseDelayMs 
       if (attempt >= attempts) throw error;
       // Retrying right away would only make a rate limit worse.
       if (error instanceof Ao3BusyError) throw error;
-      await new Promise((resolve) => setTimeout(resolve, baseDelayMs * attempt));
+      await new Promise((resolve) =>
+        setTimeout(resolve, baseDelayMs * attempt),
+      );
     }
   }
 }
@@ -193,7 +205,10 @@ export async function cachedGetSeries(seriesId: CacheKey) {
     // actually parsed — an incomplete/broken AO3 response comes back as a
     // "successful" series with an empty name and no works instead of
     // throwing, which would otherwise get cached as good data for an hour.
-    if (!series.name) throw new Error("Series name is empty — AO3 likely returned an incomplete page");
+    if (!series.name)
+      throw new Error(
+        "Series name is empty — AO3 likely returned an incomplete page",
+      );
     return series;
   });
 }
@@ -206,7 +221,10 @@ export async function cachedGetSeries(seriesId: CacheKey) {
 export async function cachedGetFullSeries(seriesId: CacheKey) {
   return fullSeriesCache.getOrSet(seriesId, async () => {
     const first = await getSeries({ seriesId, page: 1 });
-    if (!first.name) throw new Error("Series name is empty — AO3 likely returned an incomplete page");
+    if (!first.name)
+      throw new Error(
+        "Series name is empty — AO3 likely returned an incomplete page",
+      );
 
     const works = [...first.works];
     for (let page = 2; page <= first.pages.total; page++) {
@@ -223,18 +241,29 @@ export async function cachedGetUser(username: string) {
   return userCache.getOrSet(username, () => getUser({ username }));
 }
 
-function chapterCacheKey(workId: CacheKey, chapterId?: number | string | null): string {
+function chapterCacheKey(
+  workId: CacheKey,
+  chapterId?: number | string | null,
+): string {
   return `${workId}:${chapterId ?? "default"}`;
 }
 
-export async function cachedGetWorkChapter(workId: CacheKey, chapterId?: number) {
+export async function cachedGetWorkChapter(
+  workId: CacheKey,
+  chapterId?: number,
+) {
   const key = chapterCacheKey(workId, chapterId);
   return workChapterCache.getOrSet(key, () => getWork({ workId, chapterId }));
 }
 
-export async function cachedGetWorkContent(workId: CacheKey, chapterId?: number) {
+export async function cachedGetWorkContent(
+  workId: CacheKey,
+  chapterId?: number,
+) {
   const key = chapterCacheKey(workId, chapterId);
-  return workContentCache.getOrSet(key, () => getWorkContent({ workId, chapterId }));
+  return workContentCache.getOrSet(key, () =>
+    getWorkContent({ workId, chapterId }),
+  );
 }
 
 // Shared raw-HTML cache for every ao3.js fetch, wired in via setFetcher
@@ -281,8 +310,11 @@ let ao3PauseReason: Ao3BusyReason = "overloaded";
 function pauseFromRetryAfter(header: string | null): number {
   if (header) {
     const seconds = Number(header);
-    const ms = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(header) - Date.now();
-    if (Number.isFinite(ms) && ms > 0) return Math.min(ms, MAX_RATE_LIMIT_PAUSE_MS);
+    const ms = Number.isFinite(seconds)
+      ? seconds * 1000
+      : Date.parse(header) - Date.now();
+    if (Number.isFinite(ms) && ms > 0)
+      return Math.min(ms, MAX_RATE_LIMIT_PAUSE_MS);
   }
   return DEFAULT_RATE_LIMIT_PAUSE_MS;
 }
@@ -290,32 +322,49 @@ function pauseFromRetryAfter(header: string | null): number {
 // The only place the bot talks to AO3. Each attempt waits its turn in
 // ao3Limiter, so cache hits anywhere above never queue, and retry backoff
 // happens outside the limiter instead of holding its slot.
-export async function fetchAo3Text(url: string, cookie: string = ""): Promise<string> {
+export async function fetchAo3Text(
+  url: string,
+  cookie: string = "",
+): Promise<string> {
   return withRetry(async () => {
     // RECEIVED counts jobs Bottleneck hasn't moved into its queue yet.
     const { RECEIVED, QUEUED } = ao3Limiter.counts();
     if (Date.now() < ao3PausedUntil) throw new Ao3BusyError(ao3PauseReason);
-    if (RECEIVED + QUEUED >= MAX_QUEUED_REQUESTS) throw new Ao3BusyError("overloaded");
+    if (RECEIVED + QUEUED >= MAX_QUEUED_REQUESTS)
+      throw new Ao3BusyError("overloaded");
     return ao3Limiter.schedule(async () => {
       // A pause can start while this request was waiting in the queue.
       if (Date.now() < ao3PausedUntil) throw new Ao3BusyError(ao3PauseReason);
-      const headers = cookie ? { ...BROWSER_HEADERS, Cookie: cookie } : BROWSER_HEADERS;
+      const headers = cookie
+        ? { ...BROWSER_HEADERS, Cookie: cookie }
+        : BROWSER_HEADERS;
       let response: Response;
       try {
-        response = await fetch(url, { headers, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+        response = await fetch(url, {
+          headers,
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        });
       } catch (error) {
         if (error instanceof Error && error.name === "TimeoutError") {
-          throw new Error(`AO3 request timed out after ${FETCH_TIMEOUT_MS / 1000}s for ${url}`, {cause: error});
+          throw new Error(
+            `AO3 request timed out after ${FETCH_TIMEOUT_MS / 1000}s for ${url}`,
+            { cause: error },
+          );
         }
         throw error;
       }
       const backOffReason = BACK_OFF_STATUSES.get(response.status);
       if (backOffReason) {
-        const pauseMs = pauseFromRetryAfter(response.headers.get("Retry-After"));
+        const pauseMs = pauseFromRetryAfter(
+          response.headers.get("Retry-After"),
+        );
         ao3PausedUntil = Date.now() + pauseMs;
         ao3PauseReason = backOffReason;
-        const what = backOffReason === "rateLimited" ? "rate-limited us" : "is overloaded";
-        console.warn(`AO3 ${what} (HTTP ${response.status}); pausing requests for ${Math.round(pauseMs / 1000)}s`);
+        const what =
+          backOffReason === "rateLimited" ? "rate-limited us" : "is overloaded";
+        console.warn(
+          `AO3 ${what} (HTTP ${response.status}); pausing requests for ${Math.round(pauseMs / 1000)}s`,
+        );
         throw new Ao3BusyError(backOffReason);
       }
       if (!response.ok) {
@@ -326,7 +375,10 @@ export async function fetchAo3Text(url: string, cookie: string = ""): Promise<st
   });
 }
 
-export async function cachedFetchText(url: string, cookie: string = ""): Promise<string> {
+export async function cachedFetchText(
+  url: string,
+  cookie: string = "",
+): Promise<string> {
   const key = `${url}::${cookie}`;
   // Retry happens inside fetchAo3Text, not around a caller, so it's a real
   // second network attempt rather than hitting this cache's own cooldown.

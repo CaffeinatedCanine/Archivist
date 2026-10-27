@@ -32,7 +32,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const token = process.env.DBL_TOKEN;
-	const topggToken = process.env.TOPGG_TOKEN;
+  const topggToken = process.env.TOPGG_TOKEN;
   const botId = interaction.client.application.id;
   const dryRun = interaction.options.getBoolean("dry_run") ?? false;
 
@@ -57,7 +57,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 
   if (topggToken) {
     await new Api(topggToken).postCommands(
-    	commands as unknown as APIApplicationCommand[],
+      commands as unknown as APIApplicationCommand[],
     );
   }
 

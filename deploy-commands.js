@@ -18,7 +18,9 @@ const { deployCommands } = await import("./utils/deployCommands.js");
   try {
     const result = await deployCommands();
 
-    console.log(`Successfully reloaded ${result.globalCount} global application (/) commands.`);
+    console.log(
+      `Successfully reloaded ${result.globalCount} global application (/) commands.`,
+    );
 
     if (result.devCommandCount === 0) {
       return;
@@ -33,7 +35,10 @@ const { deployCommands } = await import("./utils/deployCommands.js");
 
     for (const r of result.devServerResults) {
       if (r.error) {
-        console.error(`Failed to register dev commands for guild ${r.guildId}:`, r.error);
+        console.error(
+          `Failed to register dev commands for guild ${r.guildId}:`,
+          r.error,
+        );
       } else {
         console.log(
           `Successfully reloaded ${r.count} dev application (/) commands for guild ${r.guildId}.`,

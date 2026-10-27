@@ -10,7 +10,10 @@ import {
   StringSelectMenuInteraction,
   StringSelectMenuOptionBuilder,
 } from "discord.js";
-import { getGuildSettingsBundle, getListResetToFirstPage } from "../../utils/embedFields.ts";
+import {
+  getGuildSettingsBundle,
+  getListResetToFirstPage,
+} from "../../utils/embedFields.ts";
 
 import { ao3Embed } from "../../utils/baseEmbed.ts";
 import { ao3SeriesError } from "../../utils/errors.ts";
@@ -51,7 +54,10 @@ async function getListSession(seriesId: string): Promise<ListSession> {
   // Long series can mean several AO3 requests; each one is rate-limited
   // inside utils/cache.ts.
   const series = await cachedGetFullSeries(seriesId);
-  const authors = constructCreators(series.authors, series.authors?.[0]?.anonymous);
+  const authors = constructCreators(
+    series.authors,
+    series.authors?.[0]?.anonymous,
+  );
   const seriesURL = getSeriesUrl({ seriesId });
   const pageBoundaries = computePageBoundaries(series, authors);
 
@@ -61,7 +67,10 @@ async function getListSession(seriesId: string): Promise<ListSession> {
 }
 
 // Formats one work line, with a rating icon.
-function formatWorkLine(index: number, work: SeriesData["works"][number]): string {
+function formatWorkLine(
+  index: number,
+  work: SeriesData["works"][number],
+): string {
   const icon = ratingIcon(work);
   return `${index + 1}. ${icon ? `${icon} ` : ""}[${work.title}](${work.url})`;
 }
@@ -136,7 +145,13 @@ function buildListPageSelectRow(
   const windowStart =
     pageCount <= MAX_SELECT_OPTIONS
       ? 0
-      : Math.max(0, Math.min(page - Math.floor(MAX_SELECT_OPTIONS / 2), pageCount - MAX_SELECT_OPTIONS));
+      : Math.max(
+          0,
+          Math.min(
+            page - Math.floor(MAX_SELECT_OPTIONS / 2),
+            pageCount - MAX_SELECT_OPTIONS,
+          ),
+        );
   const windowEnd = Math.min(windowStart + MAX_SELECT_OPTIONS, pageCount);
 
   const options = [];
@@ -157,7 +172,9 @@ function buildListPageSelectRow(
   return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId(`list-select:${ownerId}:${seriesId}`)
-      .setPlaceholder(`Page ${page + 1} of ${pageCount}: works ${currentStart}-${currentEnd}`)
+      .setPlaceholder(
+        `Page ${page + 1} of ${pageCount}: works ${currentStart}-${currentEnd}`,
+      )
       .addOptions(options),
   );
 }
@@ -173,7 +190,15 @@ function buildListComponents(
   const rows = [];
 
   if (pageCount > 1) {
-    rows.push(buildListPageSelectRow(ownerId, page, pageBoundaries, totalWorks, seriesId));
+    rows.push(
+      buildListPageSelectRow(
+        ownerId,
+        page,
+        pageBoundaries,
+        totalWorks,
+        seriesId,
+      ),
+    );
   }
 
   rows.push(
@@ -199,7 +224,10 @@ async function buildListDefaultPayload(
   seriesId: string,
   guildId: string | null | undefined,
   ownerId: string,
-): Promise<{ embeds: ReturnType<typeof ao3Embed>[]; components: ReturnType<typeof buildListComponents> | [] } | null> {
+): Promise<{
+  embeds: ReturnType<typeof ao3Embed>[];
+  components: ReturnType<typeof buildListComponents> | [];
+} | null> {
   const bundle = await getGuildSettingsBundle(guildId);
   if (!getListResetToFirstPage(bundle)) return null;
 
@@ -216,7 +244,13 @@ async function buildListDefaultPayload(
     embeds: [embed],
     components:
       pageCount > 1
-        ? buildListComponents(ownerId, page, session.pageBoundaries, session.series.works.length, seriesId)
+        ? buildListComponents(
+            ownerId,
+            page,
+            session.pageBoundaries,
+            session.series.works.length,
+            seriesId,
+          )
         : [],
   };
 }

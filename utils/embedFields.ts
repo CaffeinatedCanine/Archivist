@@ -47,19 +47,22 @@ export const EMBED_FIELD_CATEGORIES = {
       {
         key: "deleteOriginalMessage",
         label: "Delete original message with link",
-        description: "Deletes the user's entire message, including any other text, after the bot posts its embed(s).",
+        description:
+          "Deletes the user's entire message, including any other text, after the bot posts its embed(s).",
         defaultEnabled: false,
       },
       {
         key: "legacyWorkEmbed",
         label: "Use the original Archivist-style embed",
-        description: "One embed including all fields, instead of paginated Stats/Tags/Summary tabs.",
+        description:
+          "One embed including all fields, instead of paginated Stats/Tags/Summary tabs.",
         defaultEnabled: false,
       },
       {
         key: "outageAlerts",
         label: "Post AO3 outage alerts",
-        description: "Posts to the channel set below whenever AO3's status changes, and again on recovery.",
+        description:
+          "Posts to the channel set below whenever AO3's status changes, and again on recovery.",
         defaultEnabled: false,
       },
     ] as FieldDef[],
@@ -67,15 +70,51 @@ export const EMBED_FIELD_CATEGORIES = {
   "work-stats": {
     title: "Stats",
     fields: [
-      { key: "words", label: "Words", description: "Total word count of the work." },
-      { key: "chapters", label: "Chapters", description: "Published / total chapter count." },
-      { key: "language", label: "Language", description: "The work's language." },
-      { key: "published", label: "Published", description: "When the work was first posted." },
-      { key: "updated", label: "Updated", description: "When the work was last updated." },
-      { key: "status", label: "Status", description: "Complete or Work in Progress." },
-      { key: "rating", label: "Rating", description: "AO3 content rating (Explicit, Mature, etc.)." },
-      { key: "warnings", label: "Warnings", description: "The work's Archive Warnings, if any." },
-      { key: "category", label: "Category", description: "Ship category (F/M, M/M, Gen, etc.)." },
+      {
+        key: "words",
+        label: "Words",
+        description: "Total word count of the work.",
+      },
+      {
+        key: "chapters",
+        label: "Chapters",
+        description: "Published / total chapter count.",
+      },
+      {
+        key: "language",
+        label: "Language",
+        description: "The work's language.",
+      },
+      {
+        key: "published",
+        label: "Published",
+        description: "When the work was first posted.",
+      },
+      {
+        key: "updated",
+        label: "Updated",
+        description: "When the work was last updated.",
+      },
+      {
+        key: "status",
+        label: "Status",
+        description: "Complete or Work in Progress.",
+      },
+      {
+        key: "rating",
+        label: "Rating",
+        description: "AO3 content rating (Explicit, Mature, etc.).",
+      },
+      {
+        key: "warnings",
+        label: "Warnings",
+        description: "The work's Archive Warnings, if any.",
+      },
+      {
+        key: "category",
+        label: "Category",
+        description: "Ship category (F/M, M/M, Gen, etc.).",
+      },
     ] as FieldDef[],
   },
   "work-tags": {
@@ -125,17 +164,20 @@ export const EMBED_FIELD_CATEGORIES = {
       {
         key: "enabled",
         label: "Show image gallery",
-        description: "Post a paginated gallery of a work's all embedded images alongside its main embed.",
+        description:
+          "Post a paginated gallery of a work's all embedded images alongside its main embed.",
       },
       {
         key: "nsfwWarningMature",
         label: "NSFW warning for Mature works",
-        description: "Adds a warning-only first page to Mature-rated galleries. Click through to see the images.",
+        description:
+          "Adds a warning-only first page to Mature-rated galleries. Click through to see the images.",
       },
       {
         key: "nsfwWarningExplicit",
         label: "NSFW warning for Explicit works",
-        description: "Adds a warning-only first page to Explicit-rated galleries. Click through to see the images.",
+        description:
+          "Adds a warning-only first page to Explicit-rated galleries. Click through to see the images.",
       },
     ] as FieldDef[],
   },
@@ -146,7 +188,8 @@ export const EMBED_FIELD_CATEGORIES = {
       {
         key: "galleryResetToFirstPage",
         label: "Reset gallery to page 1 after inactivity",
-        description: "The original gallery message jumps back to page 1 after 5 minutes with no clicks.",
+        description:
+          "The original gallery message jumps back to page 1 after 5 minutes with no clicks.",
       },
     ] as FieldDef[],
   },
@@ -156,8 +199,16 @@ export const EMBED_FIELD_CATEGORIES = {
     title: "Ratings",
     fields: [
       { key: "rating-not-rated", label: "Not Rated", defaultEnabled: true },
-      { key: "rating-general-audiences", label: "General Audiences", defaultEnabled: true },
-      { key: "rating-teen-and-up-audiences", label: "Teen And Up Audiences", defaultEnabled: true },
+      {
+        key: "rating-general-audiences",
+        label: "General Audiences",
+        defaultEnabled: true,
+      },
+      {
+        key: "rating-teen-and-up-audiences",
+        label: "Teen And Up Audiences",
+        defaultEnabled: true,
+      },
       { key: "rating-mature", label: "Mature", defaultEnabled: true },
       { key: "rating-explicit", label: "Explicit", defaultEnabled: true },
     ] as FieldDef[],
@@ -168,9 +219,21 @@ export const EMBED_FIELD_CATEGORIES = {
   restrictions: {
     title: "Restrictions",
     fields: [
-      { key: "warning-graphic-violence", label: "Graphic Depictions Of Violence", defaultEnabled: true },
-      { key: "warning-major-character-death", label: "Major Character Death", defaultEnabled: true },
-      { key: "warning-no-warnings-apply", label: "No Archive Warnings Apply", defaultEnabled: true },
+      {
+        key: "warning-graphic-violence",
+        label: "Graphic Depictions Of Violence",
+        defaultEnabled: true,
+      },
+      {
+        key: "warning-major-character-death",
+        label: "Major Character Death",
+        defaultEnabled: true,
+      },
+      {
+        key: "warning-no-warnings-apply",
+        label: "No Archive Warnings Apply",
+        defaultEnabled: true,
+      },
       { key: "warning-noncon", label: "Rape/Non-Con", defaultEnabled: true },
       { key: "warning-underage", label: "Underage Sex", defaultEnabled: true },
       {
@@ -183,24 +246,54 @@ export const EMBED_FIELD_CATEGORIES = {
   chapter: {
     title: "Fields",
     fields: [
-      { key: "words", label: "Words", description: "Chapter word count, with the work's total in brackets." },
-      { key: "chapters", label: "Chapters", description: "Published / total chapter count." },
-      { key: "rating", label: "Rating", description: "AO3 content rating (Explicit, Mature, etc.)." },
-      { key: "published", label: "Published", description: "When the work was first posted." },
-      { key: "updated", label: "Updated", description: "When the work was last updated." },
-      { key: "status", label: "Status", description: "Complete or Work in Progress." },
-      { key: "warnings", label: "Warnings", description: "The work's Archive Warnings, if any." },
+      {
+        key: "words",
+        label: "Words",
+        description: "Chapter word count, with the work's total in brackets.",
+      },
+      {
+        key: "chapters",
+        label: "Chapters",
+        description: "Published / total chapter count.",
+      },
+      {
+        key: "rating",
+        label: "Rating",
+        description: "AO3 content rating (Explicit, Mature, etc.).",
+      },
+      {
+        key: "published",
+        label: "Published",
+        description: "When the work was first posted.",
+      },
+      {
+        key: "updated",
+        label: "Updated",
+        description: "When the work was last updated.",
+      },
+      {
+        key: "status",
+        label: "Status",
+        description: "Complete or Work in Progress.",
+      },
+      {
+        key: "warnings",
+        label: "Warnings",
+        description: "The work's Archive Warnings, if any.",
+      },
       {
         key: "summary",
         label: "Summary",
-        description: "Adds a Summary tab with this chapter's summary, paginated if it's long.",
+        description:
+          "Adds a Summary tab with this chapter's summary, paginated if it's long.",
         maxLength: 3000,
         maxLengthCap: 10000,
       },
       {
         key: "notes",
         label: "Notes",
-        description: "This chapter's beginning/end author notes — merged into Summary if present, else its own tab.",
+        description:
+          "This chapter's beginning/end author notes — merged into Summary if present, else its own tab.",
         maxLength: 3000,
         maxLengthCap: 10000,
       },
@@ -241,17 +334,20 @@ export const EMBED_FIELD_CATEGORIES = {
       {
         key: "enabled",
         label: "Show chapter thumbnail",
-        description: "Shows the chapter's first embedded image as a small thumbnail.",
+        description:
+          "Shows the chapter's first embedded image as a small thumbnail.",
       },
       {
         key: "excludeMature",
         label: "Hide thumbnail on Mature works",
-        description: "Never show a thumbnail for chapters belonging to a Mature-rated work.",
+        description:
+          "Never show a thumbnail for chapters belonging to a Mature-rated work.",
       },
       {
         key: "excludeExplicit",
         label: "Hide thumbnail on Explicit works",
-        description: "Never show a thumbnail for chapters belonging to an Explicit-rated work.",
+        description:
+          "Never show a thumbnail for chapters belonging to an Explicit-rated work.",
       },
     ] as FieldDef[],
   },
@@ -263,24 +359,54 @@ export const EMBED_FIELD_CATEGORIES = {
   series: {
     title: "Fields",
     fields: [
-      { key: "authors", label: "Authors", description: "Who wrote the series." },
-      { key: "complete", label: "Complete", description: "Whether every work in the series is finished." },
-      { key: "workCount", label: "Works", description: "How many works are in the series." },
-      { key: "wordCount", label: "Total Word Count", description: "Combined word count across the series." },
-      { key: "bookmarks", label: "Bookmarks", description: "Total bookmark count for the series." },
-      { key: "started", label: "Started", description: "When the series was started." },
-      { key: "updated", label: "Updated", description: "When the series was last updated." },
+      {
+        key: "authors",
+        label: "Authors",
+        description: "Who wrote the series.",
+      },
+      {
+        key: "complete",
+        label: "Complete",
+        description: "Whether every work in the series is finished.",
+      },
+      {
+        key: "workCount",
+        label: "Works",
+        description: "How many works are in the series.",
+      },
+      {
+        key: "wordCount",
+        label: "Total Word Count",
+        description: "Combined word count across the series.",
+      },
+      {
+        key: "bookmarks",
+        label: "Bookmarks",
+        description: "Total bookmark count for the series.",
+      },
+      {
+        key: "started",
+        label: "Started",
+        description: "When the series was started.",
+      },
+      {
+        key: "updated",
+        label: "Updated",
+        description: "When the series was last updated.",
+      },
       {
         key: "notes",
         label: "Notes",
-        description: "Adds a Notes tab with the series' author notes, paginated if it's long.",
+        description:
+          "Adds a Notes tab with the series' author notes, paginated if it's long.",
         maxLength: 3000,
         maxLengthCap: 10000,
       },
       {
         key: "description",
         label: "Description",
-        description: "Adds a Description tab with the series' description, paginated if it's long.",
+        description:
+          "Adds a Description tab with the series' description, paginated if it's long.",
         maxLength: 3000,
         maxLengthCap: 10000,
       },
@@ -294,15 +420,51 @@ export const EMBED_FIELD_CATEGORIES = {
   user: {
     title: "Fields",
     fields: [
-      { key: "pseuds", label: "Pseuds", description: "The user's alternate pseud names." },
-      { key: "joined", label: "Joined", description: "When the user joined AO3." },
-      { key: "location", label: "Location", description: "User-provided location, if set." },
-      { key: "birthday", label: "Birthday", description: "User-provided birthday, if set." },
-      { key: "works", label: "Works", description: "Link + count of the user's works." },
-      { key: "series", label: "Series", description: "Link + count of the user's series." },
-      { key: "collections", label: "Collections", description: "Link + count of the user's collections." },
-      { key: "bookmarks", label: "Bookmarks", description: "Link + count of the user's bookmarks." },
-      { key: "gifts", label: "Gifts", description: "Link + count of works gifted to the user." },
+      {
+        key: "pseuds",
+        label: "Pseuds",
+        description: "The user's alternate pseud names.",
+      },
+      {
+        key: "joined",
+        label: "Joined",
+        description: "When the user joined AO3.",
+      },
+      {
+        key: "location",
+        label: "Location",
+        description: "User-provided location, if set.",
+      },
+      {
+        key: "birthday",
+        label: "Birthday",
+        description: "User-provided birthday, if set.",
+      },
+      {
+        key: "works",
+        label: "Works",
+        description: "Link + count of the user's works.",
+      },
+      {
+        key: "series",
+        label: "Series",
+        description: "Link + count of the user's series.",
+      },
+      {
+        key: "collections",
+        label: "Collections",
+        description: "Link + count of the user's collections.",
+      },
+      {
+        key: "bookmarks",
+        label: "Bookmarks",
+        description: "Link + count of the user's bookmarks.",
+      },
+      {
+        key: "gifts",
+        label: "Gifts",
+        description: "Link + count of works gifted to the user.",
+      },
       {
         key: "bio",
         label: "Bio",
@@ -318,7 +480,8 @@ export const EMBED_FIELD_CATEGORIES = {
       {
         key: "resetToFirstPage",
         label: "Reset to page 1 after inactivity",
-        description: "The original profile message jumps back to page 1 after 5 minutes with no clicks.",
+        description:
+          "The original profile message jumps back to page 1 after 5 minutes with no clicks.",
       },
     ] as FieldDef[],
   },
@@ -335,19 +498,42 @@ export interface EmbedFieldGroup {
 // Top-level panel pages — one per embed type. Each page's Configure row
 // gets one button per category listed here.
 export const EMBED_FIELD_GROUPS: EmbedFieldGroup[] = [
-  { key: "general", title: "General", categories: ["general", "ratings", "restrictions"] },
+  {
+    key: "general",
+    title: "General",
+    categories: ["general", "ratings", "restrictions"],
+  },
   {
     key: "work",
     title: "Work",
-    categories: ["work-stats", "work-tags", "work-summary", "gallery", "work-inactivity"],
+    categories: [
+      "work-stats",
+      "work-tags",
+      "work-summary",
+      "gallery",
+      "work-inactivity",
+    ],
   },
   {
     key: "chapter",
     title: "Chapter",
-    categories: ["chapter", "chapter-tags", "chapter-thumbnail", "chapter-inactivity"],
+    categories: [
+      "chapter",
+      "chapter-tags",
+      "chapter-thumbnail",
+      "chapter-inactivity",
+    ],
   },
-  { key: "series", title: "Series", categories: ["series", "series-inactivity"] },
-  { key: "user", title: "User Profile", categories: ["user", "user-inactivity"] },
+  {
+    key: "series",
+    title: "Series",
+    categories: ["series", "series-inactivity"],
+  },
+  {
+    key: "user",
+    title: "User Profile",
+    categories: ["user", "user-inactivity"],
+  },
 ];
 
 // --- DB column mapping ---
@@ -377,7 +563,10 @@ interface FieldColumnMap {
   lengthColumn?: string;
 }
 
-const FIELD_COLUMNS: Record<EmbedFieldCategory, Record<string, FieldColumnMap>> = {
+const FIELD_COLUMNS: Record<
+  EmbedFieldCategory,
+  Record<string, FieldColumnMap>
+> = {
   general: {
     deleteOriginalMessage: { column: "deleteOriginalLink" },
     legacyWorkEmbed: { column: "legacyWorkEmbed" },
@@ -396,8 +585,14 @@ const FIELD_COLUMNS: Record<EmbedFieldCategory, Record<string, FieldColumnMap>> 
   },
   "work-tags": {
     fandoms: { column: "showFandoms", lengthColumn: "fandomsMaxLength" },
-    relationships: { column: "showRelationships", lengthColumn: "relationshipsMaxLength" },
-    characters: { column: "showCharacters", lengthColumn: "charactersMaxLength" },
+    relationships: {
+      column: "showRelationships",
+      lengthColumn: "relationshipsMaxLength",
+    },
+    characters: {
+      column: "showCharacters",
+      lengthColumn: "charactersMaxLength",
+    },
     tags: { column: "showTags", lengthColumn: "tagsMaxLength" },
   },
   "work-summary": {
@@ -420,7 +615,9 @@ const FIELD_COLUMNS: Record<EmbedFieldCategory, Record<string, FieldColumnMap>> 
   },
   restrictions: {
     "warning-graphic-violence": { column: "allowWarningGraphicViolence" },
-    "warning-major-character-death": { column: "allowWarningMajorCharacterDeath" },
+    "warning-major-character-death": {
+      column: "allowWarningMajorCharacterDeath",
+    },
     "warning-no-warnings-apply": { column: "allowWarningNoWarningsApply" },
     "warning-noncon": { column: "allowWarningNoncon" },
     "warning-underage": { column: "allowWarningUnderage" },
@@ -439,8 +636,14 @@ const FIELD_COLUMNS: Record<EmbedFieldCategory, Record<string, FieldColumnMap>> 
   },
   "chapter-tags": {
     fandoms: { column: "showFandoms", lengthColumn: "fandomsMaxLength" },
-    relationships: { column: "showRelationships", lengthColumn: "relationshipsMaxLength" },
-    characters: { column: "showCharacters", lengthColumn: "charactersMaxLength" },
+    relationships: {
+      column: "showRelationships",
+      lengthColumn: "relationshipsMaxLength",
+    },
+    characters: {
+      column: "showCharacters",
+      lengthColumn: "charactersMaxLength",
+    },
     tags: { column: "showTags", lengthColumn: "tagsMaxLength" },
   },
   "chapter-thumbnail": {
@@ -458,7 +661,10 @@ const FIELD_COLUMNS: Record<EmbedFieldCategory, Record<string, FieldColumnMap>> 
     started: { column: "showStarted" },
     updated: { column: "showUpdated" },
     notes: { column: "showNotes", lengthColumn: "notesMaxLength" },
-    description: { column: "showDescription", lengthColumn: "descriptionMaxLength" },
+    description: {
+      column: "showDescription",
+      lengthColumn: "descriptionMaxLength",
+    },
   },
   "series-inactivity": {},
   user: {
@@ -478,7 +684,10 @@ const FIELD_COLUMNS: Record<EmbedFieldCategory, Record<string, FieldColumnMap>> 
   },
 };
 
-function bundleRow(bundle: GuildSettingsBundle, category: EmbedFieldCategory): Record<string, unknown> | null {
+function bundleRow(
+  bundle: GuildSettingsBundle,
+  category: EmbedFieldCategory,
+): Record<string, unknown> | null {
   const table = CATEGORY_TABLE[category];
   switch (table) {
     case "guild":
@@ -519,7 +728,9 @@ export function isFieldEnabled(
   category: EmbedFieldCategory,
   key: string,
 ): boolean {
-  const field = EMBED_FIELD_CATEGORIES[category].fields.find((f) => f.key === key);
+  const field = EMBED_FIELD_CATEGORIES[category].fields.find(
+    (f) => f.key === key,
+  );
   const fallback = field?.defaultEnabled ?? true;
 
   const map = FIELD_COLUMNS[category][key];
@@ -552,7 +763,10 @@ const RATING_FIELD_KEYS: Record<string, string> = {
   Explicit: "rating-explicit",
 };
 
-export function isRatingAllowed(bundle: GuildSettingsBundle, rating: string | undefined): boolean {
+export function isRatingAllowed(
+  bundle: GuildSettingsBundle,
+  rating: string | undefined,
+): boolean {
   if (!rating) return true;
   const key = RATING_FIELD_KEYS[rating];
   if (!key) return true;
@@ -591,8 +805,10 @@ export function shouldShowNsfwWarning(
   locked: boolean,
 ): boolean {
   if (locked) return false;
-  if (rating === "Mature") return isFieldEnabled(bundle, "gallery", "nsfwWarningMature");
-  if (rating === "Explicit") return isFieldEnabled(bundle, "gallery", "nsfwWarningExplicit");
+  if (rating === "Mature")
+    return isFieldEnabled(bundle, "gallery", "nsfwWarningMature");
+  if (rating === "Explicit")
+    return isFieldEnabled(bundle, "gallery", "nsfwWarningExplicit");
   return false;
 }
 
@@ -601,7 +817,9 @@ export function getFieldMaxLength(
   category: EmbedFieldCategory,
   key: string,
 ): number {
-  const field = EMBED_FIELD_CATEGORIES[category].fields.find((f) => f.key === key);
+  const field = EMBED_FIELD_CATEGORIES[category].fields.find(
+    (f) => f.key === key,
+  );
   const defaultMax = field?.maxLength ?? FIELD_VALUE_HARD_CAP;
 
   const map = FIELD_COLUMNS[category][key];
@@ -612,8 +830,13 @@ export function getFieldMaxLength(
   return typeof value === "number" ? value : defaultMax;
 }
 
-export function getFieldMaxLengthCap(category: EmbedFieldCategory, key: string): number {
-  const field = EMBED_FIELD_CATEGORIES[category].fields.find((f) => f.key === key);
+export function getFieldMaxLengthCap(
+  category: EmbedFieldCategory,
+  key: string,
+): number {
+  const field = EMBED_FIELD_CATEGORIES[category].fields.find(
+    (f) => f.key === key,
+  );
   return field?.maxLengthCap ?? FIELD_VALUE_HARD_CAP;
 }
 
@@ -651,13 +874,17 @@ export async function setCategoryFields(
   await writeCategoryValues(guildId, category, values);
 }
 
-export async function resetCategoryToDefaults(guildId: string, category: EmbedFieldCategory): Promise<void> {
+export async function resetCategoryToDefaults(
+  guildId: string,
+  category: EmbedFieldCategory,
+): Promise<void> {
   const values: Record<string, boolean | number> = {};
   for (const field of EMBED_FIELD_CATEGORIES[category].fields) {
     const map = FIELD_COLUMNS[category][field.key];
     if (!map) continue;
     values[map.column] = field.defaultEnabled ?? true;
-    if (map.lengthColumn) values[map.lengthColumn] = field.maxLength ?? FIELD_VALUE_HARD_CAP;
+    if (map.lengthColumn)
+      values[map.lengthColumn] = field.maxLength ?? FIELD_VALUE_HARD_CAP;
   }
   // Skip categories with no FieldDefs (e.g. the -inactivity ones).
   if (Object.keys(values).length === 0) return;
@@ -668,9 +895,14 @@ export function getIgnoreChar(bundle: GuildSettingsBundle): string {
   return bundle.guild?.ignoreChar || DEFAULT_IGNORE_CHAR;
 }
 
-export async function setIgnoreChar(guildId: string, ignoreChar: string): Promise<void> {
+export async function setIgnoreChar(
+  guildId: string,
+  ignoreChar: string,
+): Promise<void> {
   const char = ignoreChar.trim().slice(0, 1);
-  await updateGuildSettings(guildId, { ignoreChar: char || DEFAULT_IGNORE_CHAR });
+  await updateGuildSettings(guildId, {
+    ignoreChar: char || DEFAULT_IGNORE_CHAR,
+  });
 }
 
 // Inactivity auto-reset: default tab per embed type.
@@ -682,23 +914,36 @@ export function getWorkDefaultTab(bundle: GuildSettingsBundle): WorkDefaultTab {
   return bundle.work?.defaultTab ?? "stats";
 }
 
-export async function setWorkDefaultTab(guildId: string, tab: WorkDefaultTab): Promise<void> {
+export async function setWorkDefaultTab(
+  guildId: string,
+  tab: WorkDefaultTab,
+): Promise<void> {
   await updateWorkFieldSettings(guildId, { defaultTab: tab });
 }
 
-export function getChapterDefaultTab(bundle: GuildSettingsBundle): ChapterDefaultTab {
+export function getChapterDefaultTab(
+  bundle: GuildSettingsBundle,
+): ChapterDefaultTab {
   return bundle.chapter?.defaultTab ?? "stats";
 }
 
-export async function setChapterDefaultTab(guildId: string, tab: ChapterDefaultTab): Promise<void> {
+export async function setChapterDefaultTab(
+  guildId: string,
+  tab: ChapterDefaultTab,
+): Promise<void> {
   await updateChapterFieldSettings(guildId, { defaultTab: tab });
 }
 
-export function getSeriesDefaultTab(bundle: GuildSettingsBundle): SeriesDefaultTab {
+export function getSeriesDefaultTab(
+  bundle: GuildSettingsBundle,
+): SeriesDefaultTab {
   return bundle.series?.defaultTab ?? "stats";
 }
 
-export async function setSeriesDefaultTab(guildId: string, tab: SeriesDefaultTab): Promise<void> {
+export async function setSeriesDefaultTab(
+  guildId: string,
+  tab: SeriesDefaultTab,
+): Promise<void> {
   await updateSeriesFieldSettings(guildId, { defaultTab: tab });
 }
 
@@ -707,7 +952,10 @@ export function getListResetToFirstPage(bundle: GuildSettingsBundle): boolean {
   return bundle.guild?.listResetToFirstPage ?? true;
 }
 
-export async function setListResetToFirstPage(guildId: string, enabled: boolean): Promise<void> {
+export async function setListResetToFirstPage(
+  guildId: string,
+  enabled: boolean,
+): Promise<void> {
   await updateGuildSettings(guildId, { listResetToFirstPage: enabled });
 }
 

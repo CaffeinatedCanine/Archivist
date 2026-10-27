@@ -63,7 +63,9 @@ export const data = new SlashCommandBuilder()
       .addStringOption((option) =>
         option
           .setName("fandom")
-          .setDescription("Only match works/chapters/series tagged with this fandom."),
+          .setDescription(
+            "Only match works/chapters/series tagged with this fandom.",
+          ),
       )
       .addStringOption((option) =>
         option
@@ -217,7 +219,9 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     } catch (error) {
       await interaction.reply({
         content:
-          error instanceof Error ? error.message : "⁉️ Couldn't remove that rule.",
+          error instanceof Error
+            ? error.message
+            : "⁉️ Couldn't remove that rule.",
         flags: MessageFlags.Ephemeral,
       });
     }

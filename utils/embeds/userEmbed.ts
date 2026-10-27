@@ -1,13 +1,25 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  MessageFlags,
+} from "discord.js";
 import type { ButtonInteraction, EmbedBuilder } from "discord.js";
-import { getFieldMaxLength, getGuildSettingsBundle, isFieldEnabled } from "../embedFields.ts";
+import {
+  getFieldMaxLength,
+  getGuildSettingsBundle,
+  isFieldEnabled,
+} from "../embedFields.ts";
 
 import { ao3Embed } from "../baseEmbed.ts";
 import { cachedGetUser } from "../cache.ts";
 import { chunkText } from "../chunkText.ts";
 import { htmlToMarkdown } from "../htmlToMarkdown.ts";
 import { scheduleInactivityReset } from "../inactivityReset.ts";
-import { getAo3FailureNotice, scheduleMessageDeletion } from "../messageCleanup.ts";
+import {
+  getAo3FailureNotice,
+  scheduleMessageDeletion,
+} from "../messageCleanup.ts";
 import { truncateText } from "../truncate.ts";
 
 const BIO_PAGE_LENGTH = 750;
@@ -126,7 +138,11 @@ export async function buildUserEmbedPages(
     .setDescription(header);
 
   if (enabled("pseuds")) {
-    profilePage.addFields({ name: "Pseuds", value: user.pseuds, inline: false });
+    profilePage.addFields({
+      name: "Pseuds",
+      value: user.pseuds,
+      inline: false,
+    });
   }
 
   const profileRow: { name: string; value: string; inline: boolean }[] = [];
@@ -145,8 +161,18 @@ export async function buildUserEmbedPages(
   }
 
   const statsRow = [
-    { key: "works", name: "Works", value: `[${user.works}](${userURL}/works)`, inline: true },
-    { key: "series", name: "Series", value: `[${user.series}](${userURL}/series)`, inline: true },
+    {
+      key: "works",
+      name: "Works",
+      value: `[${user.works}](${userURL}/works)`,
+      inline: true,
+    },
+    {
+      key: "series",
+      name: "Series",
+      value: `[${user.series}](${userURL}/series)`,
+      inline: true,
+    },
     {
       key: "collections",
       name: "Collections",
@@ -159,11 +185,18 @@ export async function buildUserEmbedPages(
       value: `[${user.bookmarks}](${userURL}/bookmarks)`,
       inline: true,
     },
-    { key: "gifts", name: "Gifts", value: `[${user.gifts}](${userURL}/gifts)`, inline: true },
+    {
+      key: "gifts",
+      name: "Gifts",
+      value: `[${user.gifts}](${userURL}/gifts)`,
+      inline: true,
+    },
   ].filter((f) => enabled(f.key));
 
   if (statsRow.length > 0) {
-    profilePage.addFields(statsRow.map(({ name, value, inline }) => ({ name, value, inline })));
+    profilePage.addFields(
+      statsRow.map(({ name, value, inline }) => ({ name, value, inline })),
+    );
     padInlineRow(profilePage, statsRow.length);
   }
 
@@ -230,14 +263,21 @@ export async function buildUserEmbedDefaultPayload(
   username: string,
   guildId: string | null | undefined,
   ownerId: string,
-): Promise<{ embeds: EmbedBuilder[]; components: ReturnType<typeof buildUserEmbedComponents> | [] } | null> {
+): Promise<{
+  embeds: EmbedBuilder[];
+  components: ReturnType<typeof buildUserEmbedComponents> | [];
+} | null> {
   const bundle = await getGuildSettingsBundle(guildId);
-  if (!isFieldEnabled(bundle, "user-inactivity", "resetToFirstPage")) return null;
+  if (!isFieldEnabled(bundle, "user-inactivity", "resetToFirstPage"))
+    return null;
 
   const pages = await buildUserEmbedPages(username, guildId);
   return {
     embeds: [pages[0]],
-    components: pages.length > 1 ? buildUserEmbedComponents(ownerId, 0, pages.length, username) : [],
+    components:
+      pages.length > 1
+        ? buildUserEmbedComponents(ownerId, 0, pages.length, username)
+        : [],
   };
 }
 
@@ -270,7 +310,12 @@ export const handleUserEmbedButtonInteraction = async (
       embeds: [pages[page]],
       components:
         pages.length > 1
-          ? buildUserEmbedComponents(componentOwnerId, page, pages.length, username)
+          ? buildUserEmbedComponents(
+              componentOwnerId,
+              page,
+              pages.length,
+              username,
+            )
           : [],
     });
 

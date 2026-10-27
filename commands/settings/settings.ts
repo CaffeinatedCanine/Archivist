@@ -4,11 +4,16 @@ import {
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
-import { buildGroupComponents, buildGroupEmbed } from "../../utils/settingsPanel.ts";
+import {
+  buildGroupComponents,
+  buildGroupEmbed,
+} from "../../utils/settingsPanel.ts";
 
 export const data = new SlashCommandBuilder()
   .setName("settings")
-  .setDescription("Choose which fields are shown in Work/Gallery/Chapter/Series/User embeds.");
+  .setDescription(
+    "Choose which fields are shown in Work/Gallery/Chapter/Series/User embeds.",
+  );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
   // Deferred immediately, before any DB I/O below, so the 3s interaction
@@ -16,13 +21,16 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   if (!interaction.guildId) {
-    await interaction.editReply({ content: "This command can only be used in a server." });
+    await interaction.editReply({
+      content: "This command can only be used in a server.",
+    });
     return;
   }
 
   if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
     await interaction.editReply({
-      content: "You need the **Manage Server** permission to change bot settings.",
+      content:
+        "You need the **Manage Server** permission to change bot settings.",
     });
     return;
   }

@@ -1,10 +1,12 @@
-import {
-  ChatInputCommandInteraction,
-  SlashCommandBuilder,
-} from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { ao3WorkError, authError } from "../../utils/errors.ts";
-import { chapterDisplay, formatCompletionStatus, publishedDate, updatedAt } from "../../utils/statuses.ts";
-import { embedColor, ratingIcon } from "../../utils/ratings.ts"
+import {
+  chapterDisplay,
+  formatCompletionStatus,
+  publishedDate,
+  updatedAt,
+} from "../../utils/statuses.ts";
+import { embedColor, ratingIcon } from "../../utils/ratings.ts";
 
 import { ao3Embed } from "../../utils/baseEmbed.ts";
 import { cachedGetWork } from "../../utils/cache.ts";
@@ -23,7 +25,7 @@ export const data = new SlashCommandBuilder()
     option
       .setName("url")
       .setDescription("Provide the work link.")
-      .setRequired(true)
+      .setRequired(true),
   );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
@@ -62,10 +64,13 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   const status = formatCompletionStatus(work);
   const rating = ratingIcon(work);
   const color = embedColor(work);
-  const creators = constructCreators(work.authors, work.authors?.[0]?.anonymous);
+  const creators = constructCreators(
+    work.authors,
+    work.authors?.[0]?.anonymous,
+  );
   const series = formatWorkSeries(work);
 
-	// TODO: Add collections to embed.
+  // TODO: Add collections to embed.
   const description = `by ${creators}\n${series}`;
 
   const statsEmbed = ao3Embed(color)

@@ -29,7 +29,10 @@ export function scheduleInactivityReset(
       if (!payload) return;
       await message.edit(payload);
     } catch (error) {
-      console.error(`Failed to reset message ${message.id} to its default page`, error);
+      console.error(
+        `Failed to reset message ${message.id} to its default page`,
+        error,
+      );
     }
   }, RESET_DELAY_MS);
 

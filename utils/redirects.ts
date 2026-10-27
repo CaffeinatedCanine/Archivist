@@ -45,14 +45,19 @@ function rowToRule(row: typeof redirectRules.$inferSelect): RedirectRule {
 // add/remove). Every write below invalidates this so an admin's own change
 // is visible immediately rather than waiting out the TTL.
 const CACHE_TTL_MS = 30_000;
-const ruleCache = new Map<string, { data: RedirectRule[]; expiresAt: number }>();
+const ruleCache = new Map<
+  string,
+  { data: RedirectRule[]; expiresAt: number }
+>();
 
 function invalidateRuleCache(guildId: string): void {
   ruleCache.delete(guildId);
 }
 
 async function findGuildSettingsRow(guildId: string) {
-  return db.query.guildSettings.findFirst({ where: eq(guildSettings.guildId, guildId) });
+  return db.query.guildSettings.findFirst({
+    where: eq(guildSettings.guildId, guildId),
+  });
 }
 
 async function fetchRules(guildId: string): Promise<RedirectRule[]> {
@@ -68,7 +73,9 @@ async function fetchRules(guildId: string): Promise<RedirectRule[]> {
   return rows.map(rowToRule);
 }
 
-export async function listRedirectRules(guildId: string): Promise<RedirectRule[]> {
+export async function listRedirectRules(
+  guildId: string,
+): Promise<RedirectRule[]> {
   const cached = ruleCache.get(guildId);
   if (cached && cached.expiresAt > Date.now()) return cached.data;
 
@@ -83,7 +90,9 @@ export async function addRedirectRule(
 ): Promise<RedirectRule> {
   const existing = await listRedirectRules(guildId);
   if (existing.length >= MAX_RULES_PER_GUILD) {
-    throw new Error(`A server can have at most ${MAX_RULES_PER_GUILD} redirect rules.`);
+    throw new Error(
+      `A server can have at most ${MAX_RULES_PER_GUILD} redirect rules.`,
+    );
   }
 
   const guildSettingsId = await getOrCreateGuildSettingsId(guildId);
@@ -104,14 +113,19 @@ export async function addRedirectRule(
     });
   } catch (error) {
     console.error(`Failed to save redirect rule for guild ${guildId}.`, error);
-    throw new Error("Couldn't save the redirect rule, please try again.", {cause: error});
+    throw new Error("Couldn't save the redirect rule, please try again.", {
+      cause: error,
+    });
   }
 
   invalidateRuleCache(guildId);
   return newRule;
 }
 
-export async function removeRedirectRule(guildId: string, id: string): Promise<boolean> {
+export async function removeRedirectRule(
+  guildId: string,
+  id: string,
+): Promise<boolean> {
   const guildRow = await findGuildSettingsRow(guildId);
   if (!guildRow) return false;
 
@@ -119,7 +133,10 @@ export async function removeRedirectRule(guildId: string, id: string): Promise<b
   // rule IDs are short (8 hex chars) and not guild-scoped in the URL/UI, so
   // this stops one guild from deleting another's rule by guessing an ID.
   const existing = await db.query.redirectRules.findFirst({
-    where: and(eq(redirectRules.id, id), eq(redirectRules.guildSettingsId, guildRow.id)),
+    where: and(
+      eq(redirectRules.id, id),
+      eq(redirectRules.guildSettingsId, guildRow.id),
+    ),
   });
   if (!existing) return false;
 
@@ -136,7 +153,10 @@ export async function updateRedirectRuleThreadId(
   ruleId: string,
   threadId: string,
 ): Promise<void> {
-  await db.update(redirectRules).set({ forumThreadId: threadId }).where(eq(redirectRules.id, ruleId));
+  await db
+    .update(redirectRules)
+    .set({ forumThreadId: threadId })
+    .where(eq(redirectRules.id, ruleId));
   invalidateRuleCache(guildId);
 }
 

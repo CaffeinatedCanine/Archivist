@@ -81,10 +81,13 @@ export const guildSettings = table("guild_settings", {
  */
 export const workFieldSettings = table("work_field_settings", {
   id: t.int().primaryKey().autoincrement(),
-  guildSettingsId: t.int()
+  guildSettingsId: t
+    .int()
     .notNull()
     .unique()
-    .references((): AnyMySqlColumn => guildSettings.id, { onDelete: "cascade" }),
+    .references((): AnyMySqlColumn => guildSettings.id, {
+      onDelete: "cascade",
+    }),
 
   // work-stats
   showWords: t.boolean().default(true).notNull(),
@@ -112,7 +115,10 @@ export const workFieldSettings = table("work_field_settings", {
   summaryMaxLength: t.int().default(3000).notNull(),
 
   // Inactivity auto-reset: default tab.
-  defaultTab: t.mysqlEnum(["stats", "tags", "summary", "none"]).default("stats").notNull(),
+  defaultTab: t
+    .mysqlEnum(["stats", "tags", "summary", "none"])
+    .default("stats")
+    .notNull(),
 });
 
 /**
@@ -120,10 +126,13 @@ export const workFieldSettings = table("work_field_settings", {
  */
 export const chapterFieldSettings = table("chapter_field_settings", {
   id: t.int().primaryKey().autoincrement(),
-  guildSettingsId: t.int()
+  guildSettingsId: t
+    .int()
     .notNull()
     .unique()
-    .references((): AnyMySqlColumn => guildSettings.id, { onDelete: "cascade" }),
+    .references((): AnyMySqlColumn => guildSettings.id, {
+      onDelete: "cascade",
+    }),
 
   showWords: t.boolean().default(true).notNull(),
   showChapters: t.boolean().default(true).notNull(),
@@ -158,7 +167,10 @@ export const chapterFieldSettings = table("chapter_field_settings", {
   hideThumbnailOnExplicit: t.boolean().default(false).notNull(),
 
   // Inactivity auto-reset: default tab.
-  defaultTab: t.mysqlEnum(["stats", "tags", "summary", "none"]).default("stats").notNull(),
+  defaultTab: t
+    .mysqlEnum(["stats", "tags", "summary", "none"])
+    .default("stats")
+    .notNull(),
 });
 
 /**
@@ -166,10 +178,13 @@ export const chapterFieldSettings = table("chapter_field_settings", {
  */
 export const seriesFieldSettings = table("series_field_settings", {
   id: t.int().primaryKey().autoincrement(),
-  guildSettingsId: t.int()
+  guildSettingsId: t
+    .int()
     .notNull()
     .unique()
-    .references((): AnyMySqlColumn => guildSettings.id, { onDelete: "cascade" }),
+    .references((): AnyMySqlColumn => guildSettings.id, {
+      onDelete: "cascade",
+    }),
 
   showAuthors: t.boolean().default(true).notNull(),
   showComplete: t.boolean().default(true).notNull(),
@@ -184,7 +199,10 @@ export const seriesFieldSettings = table("series_field_settings", {
   descriptionMaxLength: t.int().default(1024).notNull(),
 
   // Inactivity auto-reset: default tab.
-  defaultTab: t.mysqlEnum(["stats", "notes", "description", "none"]).default("stats").notNull(),
+  defaultTab: t
+    .mysqlEnum(["stats", "notes", "description", "none"])
+    .default("stats")
+    .notNull(),
 });
 
 /**
@@ -192,10 +210,13 @@ export const seriesFieldSettings = table("series_field_settings", {
  */
 export const userFieldSettings = table("user_field_settings", {
   id: t.int().primaryKey().autoincrement(),
-  guildSettingsId: t.int()
+  guildSettingsId: t
+    .int()
     .notNull()
     .unique()
-    .references((): AnyMySqlColumn => guildSettings.id, { onDelete: "cascade" }),
+    .references((): AnyMySqlColumn => guildSettings.id, {
+      onDelete: "cascade",
+    }),
 
   showPseuds: t.boolean().default(true).notNull(),
   showJoined: t.boolean().default(true).notNull(),
@@ -226,14 +247,15 @@ export const blockedTags = table(
   "blocked_tags",
   {
     id: t.int().primaryKey().autoincrement(),
-    guildSettingsId: t.int()
+    guildSettingsId: t
+      .int()
       .notNull()
-      .references((): AnyMySqlColumn => guildSettings.id, { onDelete: "cascade" }),
+      .references((): AnyMySqlColumn => guildSettings.id, {
+        onDelete: "cascade",
+      }),
     tag: t.varchar({ length: 100 }).notNull(),
   },
-  (table) => [
-    t.index("blocked_tags_guild_idx").on(table.guildSettingsId),
-  ],
+  (table) => [t.index("blocked_tags_guild_idx").on(table.guildSettingsId)],
 );
 
 /**
@@ -249,9 +271,12 @@ export const redirectRules = table(
   "redirect_rules",
   {
     id: t.varchar({ length: 36 }).primaryKey(), // UUID
-    guildSettingsId: t.int()
+    guildSettingsId: t
+      .int()
       .notNull()
-      .references((): AnyMySqlColumn => guildSettings.id, { onDelete: "cascade" }),
+      .references((): AnyMySqlColumn => guildSettings.id, {
+        onDelete: "cascade",
+      }),
     destinationId: t.varchar({ length: 20 }).notNull(),
     destinationType: t.mysqlEnum(["channel", "forum", "thread"]).notNull(),
 
@@ -271,49 +296,62 @@ export const redirectRules = table(
 
     createdAt: t.timestamp().defaultNow().notNull(),
   },
-  (table) => [
-    t.index("redirect_rules_guild_idx").on(table.guildSettingsId),
-  ],
+  (table) => [t.index("redirect_rules_guild_idx").on(table.guildSettingsId)],
 );
 
 // --- Relations (for query convenience) ---
 
-export const guildSettingsRelations = relations(guildSettings, ({ one, many }) => ({
-  workFieldSettings: one(workFieldSettings),
-  chapterFieldSettings: one(chapterFieldSettings),
-  seriesFieldSettings: one(seriesFieldSettings),
-  userFieldSettings: one(userFieldSettings),
-  blockedTags: many(blockedTags),
-  redirectRules: many(redirectRules),
-}));
-
-export const workFieldSettingsRelations = relations(workFieldSettings, ({ one }) => ({
-  guild: one(guildSettings, {
-    fields: [workFieldSettings.guildSettingsId],
-    references: [guildSettings.id],
+export const guildSettingsRelations = relations(
+  guildSettings,
+  ({ one, many }) => ({
+    workFieldSettings: one(workFieldSettings),
+    chapterFieldSettings: one(chapterFieldSettings),
+    seriesFieldSettings: one(seriesFieldSettings),
+    userFieldSettings: one(userFieldSettings),
+    blockedTags: many(blockedTags),
+    redirectRules: many(redirectRules),
   }),
-}));
+);
 
-export const chapterFieldSettingsRelations = relations(chapterFieldSettings, ({ one }) => ({
-  guild: one(guildSettings, {
-    fields: [chapterFieldSettings.guildSettingsId],
-    references: [guildSettings.id],
+export const workFieldSettingsRelations = relations(
+  workFieldSettings,
+  ({ one }) => ({
+    guild: one(guildSettings, {
+      fields: [workFieldSettings.guildSettingsId],
+      references: [guildSettings.id],
+    }),
   }),
-}));
+);
 
-export const seriesFieldSettingsRelations = relations(seriesFieldSettings, ({ one }) => ({
-  guild: one(guildSettings, {
-    fields: [seriesFieldSettings.guildSettingsId],
-    references: [guildSettings.id],
+export const chapterFieldSettingsRelations = relations(
+  chapterFieldSettings,
+  ({ one }) => ({
+    guild: one(guildSettings, {
+      fields: [chapterFieldSettings.guildSettingsId],
+      references: [guildSettings.id],
+    }),
   }),
-}));
+);
 
-export const userFieldSettingsRelations = relations(userFieldSettings, ({ one }) => ({
-  guild: one(guildSettings, {
-    fields: [userFieldSettings.guildSettingsId],
-    references: [guildSettings.id],
+export const seriesFieldSettingsRelations = relations(
+  seriesFieldSettings,
+  ({ one }) => ({
+    guild: one(guildSettings, {
+      fields: [seriesFieldSettings.guildSettingsId],
+      references: [guildSettings.id],
+    }),
   }),
-}));
+);
+
+export const userFieldSettingsRelations = relations(
+  userFieldSettings,
+  ({ one }) => ({
+    guild: one(guildSettings, {
+      fields: [userFieldSettings.guildSettingsId],
+      references: [guildSettings.id],
+    }),
+  }),
+);
 
 export const blockedTagsRelations = relations(blockedTags, ({ one }) => ({
   guild: one(guildSettings, {
@@ -328,4 +366,3 @@ export const redirectRulesRelations = relations(redirectRules, ({ one }) => ({
     references: [guildSettings.id],
   }),
 }));
-

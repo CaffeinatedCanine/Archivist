@@ -6,7 +6,10 @@ export function getBlockedTags(bundle: GuildSettingsBundle): string[] {
   return bundle.blockedTags;
 }
 
-export async function setBlockedTags(guildId: string, tags: string[]): Promise<void> {
+export async function setBlockedTags(
+  guildId: string,
+  tags: string[],
+): Promise<void> {
   await replaceBlockedTags(guildId, tags);
 }
 
@@ -21,7 +24,9 @@ export function findBlockedTag(
   if (blocked.length === 0 || !workTags?.length) return null;
 
   for (const workTag of workTags) {
-    const match = blocked.find((b) => workTag.toLowerCase().includes(b.toLowerCase()));
+    const match = blocked.find((b) =>
+      workTag.toLowerCase().includes(b.toLowerCase()),
+    );
     if (match) return workTag;
   }
 

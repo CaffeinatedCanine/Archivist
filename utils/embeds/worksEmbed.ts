@@ -1,4 +1,9 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  MessageFlags,
+} from "discord.js";
 import type { ButtonInteraction, EmbedBuilder } from "discord.js";
 import {
   FIELD_VALUE_HARD_CAP,
@@ -24,7 +29,11 @@ import {
   formatWarnings,
   shipCategories,
 } from "../tags.ts";
-import { formatWorkSeries, formatWorkStartNotes, formatWorkSummary } from "../../utils/details.ts";
+import {
+  formatWorkSeries,
+  formatWorkStartNotes,
+  formatWorkSummary,
+} from "../../utils/details.ts";
 import { getWorkDetailsFromUrl, getWorkUrl } from "@fujocoded/ao3.js/urls";
 
 import { ao3Embed } from "../baseEmbed.ts";
@@ -32,12 +41,20 @@ import { authError } from "../errors.ts";
 import { cachedGetWork } from "../cache.ts";
 import { chunkTextMerged } from "../chunkText.ts";
 import { constructCreators } from "../creators.ts";
-import { getAo3FailureNotice, scheduleMessageDeletion } from "../messageCleanup.ts";
+import {
+  getAo3FailureNotice,
+  scheduleMessageDeletion,
+} from "../messageCleanup.ts";
 import { truncateText } from "../truncate.ts";
 
 type CacheKey = string | number;
 
-type WorkFieldEntry = { key: string; name: string; value: string; inline: boolean };
+type WorkFieldEntry = {
+  key: string;
+  name: string;
+  value: string;
+  inline: boolean;
+};
 
 // Shared field computation for both the paginated (Stats/Tags/Summary tabs)
 // and legacy (single embed) work embed variants, so the two stay in sync
@@ -65,23 +82,45 @@ async function computeWorkFieldData(workURL: string, guildId?: string | null) {
   const warnings = formatWarnings(work) || "None";
   const category = shipCategories(work) || "N/A";
   const fandoms = truncateTag("fandoms", formatFandoms(work) || "N/A");
-  const relationships = truncateTag("relationships", formatRelationships(work) || "N/A");
+  const relationships = truncateTag(
+    "relationships",
+    formatRelationships(work) || "N/A",
+  );
   const characters = truncateTag("characters", formatCharacters(work) || "N/A");
   const tags = truncateTag("tags", formatTags(work) || "N/A");
   const rawSummary = formatWorkSummary(work);
-  const fullSummaryText = rawSummary === "N/A" ? formatWorkStartNotes(work) : rawSummary;
+  const fullSummaryText =
+    rawSummary === "N/A" ? formatWorkStartNotes(work) : rawSummary;
   const summaryText =
     fullSummaryText && fullSummaryText !== "N/A"
-      ? truncateText(fullSummaryText, getFieldMaxLength(bundle, "work-summary", "summary"))
+      ? truncateText(
+          fullSummaryText,
+          getFieldMaxLength(bundle, "work-summary", "summary"),
+        )
       : fullSummaryText;
 
   const description = [`by ${creators}`, series].filter(Boolean).join("\n");
 
   // TODO: Add collections to embed.
   const statsFields: WorkFieldEntry[] = [
-    { key: "words", name: "Words", value: work.words.toLocaleString("en-US"), inline: true },
-    { key: "chapters", name: "Chapters", value: chapterDisplay(work), inline: true },
-    { key: "language", name: "Language", value: work.language ?? "N/A", inline: true },
+    {
+      key: "words",
+      name: "Words",
+      value: work.words.toLocaleString("en-US"),
+      inline: true,
+    },
+    {
+      key: "chapters",
+      name: "Chapters",
+      value: chapterDisplay(work),
+      inline: true,
+    },
+    {
+      key: "language",
+      name: "Language",
+      value: work.language ?? "N/A",
+      inline: true,
+    },
     { key: "published", name: "Published", value: published, inline: true },
     { key: "updated", name: "Updated", value: updatedDate, inline: true },
     { key: "status", name: "Status", value: status, inline: true },
@@ -92,13 +131,20 @@ async function computeWorkFieldData(workURL: string, guildId?: string | null) {
 
   const tagsFields: WorkFieldEntry[] = [
     { key: "fandoms", name: "Fandoms", value: fandoms, inline: false },
-    { key: "relationships", name: "Relationships", value: relationships, inline: false },
+    {
+      key: "relationships",
+      name: "Relationships",
+      value: relationships,
+      inline: false,
+    },
     { key: "characters", name: "Characters", value: characters, inline: false },
     { key: "tags", name: "Additional Tags", value: tags, inline: false },
   ].filter((f) => isFieldEnabled(bundle, "work-tags", f.key));
 
   const summaryEnabled =
-    !!summaryText && summaryText !== "N/A" && isFieldEnabled(bundle, "work-summary", "summary");
+    !!summaryText &&
+    summaryText !== "N/A" &&
+    isFieldEnabled(bundle, "work-summary", "summary");
 
   return {
     locked: false as const,
@@ -120,18 +166,30 @@ export async function buildWorkEmbedPages(
   const data = await computeWorkFieldData(workURL, guildId);
   if (data.locked) return { locked: true };
 
-  const { work, color, description, statsFields, tagsFields, summaryText, summaryEnabled } = data;
+  const {
+    work,
+    color,
+    description,
+    statsFields,
+    tagsFields,
+    summaryText,
+    summaryEnabled,
+  } = data;
 
   const statsEmbed = ao3Embed(color)
     .setTitle(work.title)
     .setURL(workURL)
     .setDescription(description)
-    .addFields(statsFields.map(({ name, value, inline }) => ({ name, value, inline })));
+    .addFields(
+      statsFields.map(({ name, value, inline }) => ({ name, value, inline })),
+    );
 
   const tagsEmbed = ao3Embed(color)
     .setTitle(work.title)
     .setURL(workURL)
-    .addFields(tagsFields.map(({ name, value, inline }) => ({ name, value, inline })));
+    .addFields(
+      tagsFields.map(({ name, value, inline }) => ({ name, value, inline })),
+    );
 
   const pages: EmbedBuilder[] = [statsEmbed, tagsEmbed];
 
@@ -162,7 +220,15 @@ export async function buildLegacyWorkEmbed(
   const data = await computeWorkFieldData(workURL, guildId);
   if (data.locked) return { locked: true };
 
-  const { work, color, description, statsFields, tagsFields, summaryText, summaryEnabled } = data;
+  const {
+    work,
+    color,
+    description,
+    statsFields,
+    tagsFields,
+    summaryText,
+    summaryEnabled,
+  } = data;
 
   const fields = [...statsFields, ...tagsFields];
   if (summaryEnabled) {
@@ -181,7 +247,9 @@ export async function buildLegacyWorkEmbed(
     .setTitle(work.title)
     .setURL(workURL)
     .setDescription(description)
-    .addFields(fields.map(({ name, value, inline }) => ({ name, value, inline })));
+    .addFields(
+      fields.map(({ name, value, inline }) => ({ name, value, inline })),
+    );
 }
 
 export function buildWorkEmbedComponents(
@@ -220,7 +288,9 @@ export function buildWorkEmbedComponents(
     );
   }
 
-  const tabRow = new ActionRowBuilder<ButtonBuilder>().addComponents(tabButtons);
+  const tabRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    tabButtons,
+  );
 
   const navRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
@@ -239,7 +309,10 @@ export function buildWorkEmbedComponents(
 }
 
 // Default tab resolver.
-function resolveWorkDefaultPage(pageCount: number, defaultTab: WorkDefaultTab): number | null {
+function resolveWorkDefaultPage(
+  pageCount: number,
+  defaultTab: WorkDefaultTab,
+): number | null {
   if (defaultTab === "none") return null;
   if (defaultTab === "tags") return 1;
   if (defaultTab === "summary") return pageCount > 2 ? 2 : 0;
@@ -251,7 +324,10 @@ export async function buildWorkEmbedDefaultPayload(
   workURL: string,
   guildId: string | null | undefined,
   ownerId: string,
-): Promise<{ embeds: EmbedBuilder[]; components: ReturnType<typeof buildWorkEmbedComponents> | [] } | null> {
+): Promise<{
+  embeds: EmbedBuilder[];
+  components: ReturnType<typeof buildWorkEmbedComponents> | [];
+} | null> {
   const bundle = await getGuildSettingsBundle(guildId);
   const defaultTab = getWorkDefaultTab(bundle);
   if (defaultTab === "none") return null;
@@ -265,7 +341,10 @@ export async function buildWorkEmbedDefaultPayload(
   const workId = getWorkDetailsFromUrl({ url: workURL }).workId;
   return {
     embeds: [result[page]],
-    components: result.length > 1 ? buildWorkEmbedComponents(ownerId, page, result.length, workId) : [],
+    components:
+      result.length > 1
+        ? buildWorkEmbedComponents(ownerId, page, result.length, workId)
+        : [],
   };
 }
 
@@ -307,7 +386,12 @@ export const handleWorkEmbedButtonInteraction = async (
       embeds: [result[page]],
       components:
         result.length > 1
-          ? buildWorkEmbedComponents(componentOwnerId, page, result.length, workId)
+          ? buildWorkEmbedComponents(
+              componentOwnerId,
+              page,
+              result.length,
+              workId,
+            )
           : [],
     });
 

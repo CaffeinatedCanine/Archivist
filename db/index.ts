@@ -16,7 +16,11 @@ if (!databaseUrl) {
 //
 // enableKeepAlive avoids ECONNRESET on idle pool connections.
 export const db = drizzle({
-  connection: { uri: databaseUrl, enableKeepAlive: true, keepAliveInitialDelay: 10_000 },
+  connection: {
+    uri: databaseUrl,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10_000,
+  },
   schema,
   mode: "default",
 });

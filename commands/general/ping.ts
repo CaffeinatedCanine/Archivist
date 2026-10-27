@@ -10,7 +10,8 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     withResponse: true,
   });
 
-  const latency = resource!.message!.createdTimestamp - interaction.createdTimestamp;
+  const latency =
+    resource!.message!.createdTimestamp - interaction.createdTimestamp;
 
   await interaction.editReply(`Pong! Roundtrip latency: ${latency}ms`);
 };

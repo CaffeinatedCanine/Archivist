@@ -15,7 +15,9 @@ export async function loadEmojis(client: ClientWithCommands): Promise<void> {
 export function getEmoji(name: string): string {
   const emoji = emojiMap?.get(name);
   if (!emoji) {
-    console.warn(`[emojis] No emoji found for "${name}" — check it's uploaded to this app.`);
+    console.warn(
+      `[emojis] No emoji found for "${name}" — check it's uploaded to this app.`,
+    );
   }
   return emoji ?? "";
 }

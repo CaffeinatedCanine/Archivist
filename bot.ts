@@ -38,14 +38,20 @@ import {
   isRatingAllowed,
   shouldShowNsfwWarning,
 } from "./utils/embedFields.ts";
-import { getCacheStatsByType, getCacheStatsTotals } from "./utils/cacheStats.ts";
+import {
+  getCacheStatsByType,
+  getCacheStatsTotals,
+} from "./utils/cacheStats.ts";
 import {
   getSeriesIdFromUrl,
   getUsernameFromUrl,
   sendRedirectableEmbed,
   showTemporaryNotice,
 } from "./utils/urls.ts";
-import { ERROR_MESSAGE_LIFETIME_MS, getAo3FailureNotice } from "./utils/messageCleanup.ts";
+import {
+  ERROR_MESSAGE_LIFETIME_MS,
+  getAo3FailureNotice,
+} from "./utils/messageCleanup.ts";
 
 import { authError } from "./utils/errors.ts";
 import {
@@ -205,14 +211,17 @@ async function postWorkLink(message: any, url: string) {
   // Starts right after the work embed is built, without waiting for message
   // edits in between, and is skipped if the work turned out blocked/locked.
   const galleryTask = galleryEnabled
-    ? workTask.then(async (result) => {
-        if ("blocked" in result || "locked" in result) return null;
-        const work = await cachedGetWork(workId);
-        const nsfwWarning = work.locked
-          ? false
-          : shouldShowNsfwWarning(bundle, work.rating, work.locked);
-        return buildWorkGalleryPage(workId, url, 0, { nsfwWarning });
-      }, () => null) // the work embed's own .catch below reports the failure
+    ? workTask.then(
+        async (result) => {
+          if ("blocked" in result || "locked" in result) return null;
+          const work = await cachedGetWork(workId);
+          const nsfwWarning = work.locked
+            ? false
+            : shouldShowNsfwWarning(bundle, work.rating, work.locked);
+          return buildWorkGalleryPage(workId, url, 0, { nsfwWarning });
+        },
+        () => null,
+      ) // the work embed's own .catch below reports the failure
     : null;
 
   workTask
@@ -236,7 +245,12 @@ async function postWorkLink(message: any, url: string) {
       const embeds = [result[0]];
       const components =
         result.length > 1
-          ? buildWorkEmbedComponents(message.author.id, 0, result.length, workId)
+          ? buildWorkEmbedComponents(
+              message.author.id,
+              0,
+              result.length,
+              workId,
+            )
           : [];
 
       const work = await cachedGetWork(workId);
@@ -260,7 +274,11 @@ async function postWorkLink(message: any, url: string) {
     })
     .catch(async (error) => {
       console.error(`Failed to build work embed for ${url}`, error);
-      await showTemporaryNotice(waitingMsg, getAo3FailureNotice(error), ERROR_MESSAGE_LIFETIME_MS).catch(() => {});
+      await showTemporaryNotice(
+        waitingMsg,
+        getAo3FailureNotice(error),
+        ERROR_MESSAGE_LIFETIME_MS,
+      ).catch(() => {});
       await galleryWaitingMsg?.delete().catch(() => {});
     });
 
@@ -279,7 +297,12 @@ async function postWorkLink(message: any, url: string) {
           files: result.page.files,
           components:
             result.totalPages > 1
-              ? buildWorkGalleryComponents(message.author.id, 0, result.totalPages, workId)
+              ? buildWorkGalleryComponents(
+                  message.author.id,
+                  0,
+                  result.totalPages,
+                  workId,
+                )
               : [],
         },
         {
@@ -341,8 +364,11 @@ async function handleMessageCreate(message: any) {
       if (url.includes("/works/") && !url.includes("/chapters/")) {
         await postWorkLink(message, url);
         continue;
-      } if (url.includes("/users/")) {
-        const waitingMsg = await message.channel.send("⏳ Fetching from AO3...");
+      }
+      if (url.includes("/users/")) {
+        const waitingMsg = await message.channel.send(
+          "⏳ Fetching from AO3...",
+        );
         try {
           const username = getUsernameFromUrl(url);
           const pages = await buildUserEmbedPages(username, message.guildId);
@@ -352,7 +378,12 @@ async function handleMessageCreate(message: any) {
               embeds: [pages[0]],
               components:
                 pages.length > 1
-                  ? buildUserEmbedComponents(message.author.id, 0, pages.length, username)
+                  ? buildUserEmbedComponents(
+                      message.author.id,
+                      0,
+                      pages.length,
+                      username,
+                    )
                   : [],
             },
             { type: "user" },
@@ -360,18 +391,28 @@ async function handleMessageCreate(message: any) {
           );
 
           scheduleInactivityReset(sentMessage, () =>
-            buildUserEmbedDefaultPayload(username, message.guildId, message.author.id),
+            buildUserEmbedDefaultPayload(
+              username,
+              message.guildId,
+              message.author.id,
+            ),
           );
         } catch (error) {
           console.error(`Failed to build user embed for ${url}`);
           console.error(error);
-          await showTemporaryNotice(waitingMsg, getAo3FailureNotice(error), ERROR_MESSAGE_LIFETIME_MS).catch(() => {});
+          await showTemporaryNotice(
+            waitingMsg,
+            getAo3FailureNotice(error),
+            ERROR_MESSAGE_LIFETIME_MS,
+          ).catch(() => {});
         }
         continue;
       }
 
       if (url.includes("/series/")) {
-        const waitingMsg = await message.channel.send("⏳ Fetching from AO3...");
+        const waitingMsg = await message.channel.send(
+          "⏳ Fetching from AO3...",
+        );
         try {
           const seriesId = getSeriesIdFromUrl(url);
           const [result, series] = await Promise.all([
@@ -398,11 +439,19 @@ async function handleMessageCreate(message: any) {
           );
 
           scheduleInactivityReset(sentMessage, () =>
-            buildSeriesEmbedDefaultPayload(url, message.guildId, message.author.id),
+            buildSeriesEmbedDefaultPayload(
+              url,
+              message.guildId,
+              message.author.id,
+            ),
           );
         } catch (error) {
           console.error(`Failed to build series embed for ${url}`, error);
-          await showTemporaryNotice(waitingMsg, getAo3FailureNotice(error), ERROR_MESSAGE_LIFETIME_MS).catch(() => {});
+          await showTemporaryNotice(
+            waitingMsg,
+            getAo3FailureNotice(error),
+            ERROR_MESSAGE_LIFETIME_MS,
+          ).catch(() => {});
         }
         continue;
       }
@@ -460,7 +509,12 @@ async function handleChapterLink(message: any, url: string) {
 
   collector.on("collect", async (buttonInteraction: ButtonInteraction) => {
     try {
-      await handleWorkOrChapterChoice(buttonInteraction, message, url, botReply);
+      await handleWorkOrChapterChoice(
+        buttonInteraction,
+        message,
+        url,
+        botReply,
+      );
     } catch (error) {
       console.error(`Failed to handle work/chapter choice for ${url}`, error);
     }
@@ -481,100 +535,111 @@ async function handleWorkOrChapterChoice(
   url: string,
   botReply: any,
 ) {
-    if (buttonInteraction.user.id !== message.author.id) {
-      await buttonInteraction.reply({
-        content: "These buttons aren't for you!",
-        flags: MessageFlags.Ephemeral,
-      });
-      return;
-    }
+  if (buttonInteraction.user.id !== message.author.id) {
+    await buttonInteraction.reply({
+      content: "These buttons aren't for you!",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
 
-    botReply.delete();
+  botReply.delete();
 
-    if (buttonInteraction.customId === "work") {
-      await postWorkLink(message, url);
-      return;
-    }
+  if (buttonInteraction.customId === "work") {
+    await postWorkLink(message, url);
+    return;
+  }
 
-    if (buttonInteraction.customId === "chapter") {
-      const waitingMsg = await message.channel.send("⏳ Fetching from AO3...");
+  if (buttonInteraction.customId === "chapter") {
+    const waitingMsg = await message.channel.send("⏳ Fetching from AO3...");
 
-      try {
-        const workId = getWorkDetailsFromUrl({ url }).workId;
-        const work = await cachedGetWork(workId);
-        const bundle = await getGuildSettingsBundle(message.guildId);
+    try {
+      const workId = getWorkDetailsFromUrl({ url }).workId;
+      const work = await cachedGetWork(workId);
+      const bundle = await getGuildSettingsBundle(message.guildId);
 
-        if (!work.locked) {
-          if (!isRatingAllowed(bundle, work.rating)) {
-            await showTemporaryNotice(
-              waitingMsg,
-              `🚫 Links to **${work.rating}** works aren't allowed in this server.`,
-              BLOCKED_CONTENT_NOTICE_LIFETIME_MS,
-            );
-            return;
-          }
-          const blockedTag = findBlockedTag(bundle, work.tags?.additional);
-          if (blockedTag) {
-            await showTemporaryNotice(
-              waitingMsg,
-              `🚫 This work is tagged "${blockedTag}", which is blocked in this server.`,
-              BLOCKED_CONTENT_NOTICE_LIFETIME_MS,
-            );
-            return;
-          }
-          const blockedWarning = findDisallowedWarning(bundle, work.tags?.warnings);
-          if (blockedWarning) {
-            await showTemporaryNotice(
-              waitingMsg,
-              `🚫 This work has the "${blockedWarning}" warning, which is blocked in this server.`,
-              BLOCKED_CONTENT_NOTICE_LIFETIME_MS,
-            );
-            return;
-          }
-        }
-
-        const result = await buildChapterEmbedPages(url, message.guildId);
-
-        if ("locked" in result) {
-          await waitingMsg.edit(authError);
+      if (!work.locked) {
+        if (!isRatingAllowed(bundle, work.rating)) {
+          await showTemporaryNotice(
+            waitingMsg,
+            `🚫 Links to **${work.rating}** works aren't allowed in this server.`,
+            BLOCKED_CONTENT_NOTICE_LIFETIME_MS,
+          );
           return;
         }
-
-        // Always present — this branch only runs for /chapters/ URLs (see handleChapterLink).
-        const chapterId = getWorkDetailsFromUrl({ url }).chapterId!;
-        const components =
-          result.pages.length > 1
-            ? buildChapterEmbedComponents(
-                message.author.id,
-                0,
-                result.tagsPageCount,
-                result.contentPageCount,
-                result.contentTabLabel,
-                workId,
-                chapterId,
-              )
-            : [];
-
-        const { message: sentMessage } = await sendRedirectableEmbed(
-          message,
-          { embeds: [result.pages[0]], components },
-          {
-            rating: work.locked ? undefined : work.rating,
-            fandoms: work.locked ? undefined : work.fandoms,
-            type: "chapter",
-          },
-          waitingMsg,
+        const blockedTag = findBlockedTag(bundle, work.tags?.additional);
+        if (blockedTag) {
+          await showTemporaryNotice(
+            waitingMsg,
+            `🚫 This work is tagged "${blockedTag}", which is blocked in this server.`,
+            BLOCKED_CONTENT_NOTICE_LIFETIME_MS,
+          );
+          return;
+        }
+        const blockedWarning = findDisallowedWarning(
+          bundle,
+          work.tags?.warnings,
         );
-
-        scheduleInactivityReset(sentMessage, () =>
-          buildChapterEmbedDefaultPayload(url, message.guildId, message.author.id),
-        );
-      } catch (error) {
-        console.error(`Failed to build chapter embed for ${url}`);
-        console.error(error);
-        await showTemporaryNotice(waitingMsg, getAo3FailureNotice(error), ERROR_MESSAGE_LIFETIME_MS).catch(() => {});
+        if (blockedWarning) {
+          await showTemporaryNotice(
+            waitingMsg,
+            `🚫 This work has the "${blockedWarning}" warning, which is blocked in this server.`,
+            BLOCKED_CONTENT_NOTICE_LIFETIME_MS,
+          );
+          return;
+        }
       }
+
+      const result = await buildChapterEmbedPages(url, message.guildId);
+
+      if ("locked" in result) {
+        await waitingMsg.edit(authError);
+        return;
+      }
+
+      // Always present — this branch only runs for /chapters/ URLs (see handleChapterLink).
+      const chapterId = getWorkDetailsFromUrl({ url }).chapterId!;
+      const components =
+        result.pages.length > 1
+          ? buildChapterEmbedComponents(
+              message.author.id,
+              0,
+              result.tagsPageCount,
+              result.contentPageCount,
+              result.contentTabLabel,
+              workId,
+              chapterId,
+            )
+          : [];
+
+      const { message: sentMessage } = await sendRedirectableEmbed(
+        message,
+        { embeds: [result.pages[0]], components },
+        {
+          rating: work.locked ? undefined : work.rating,
+          fandoms: work.locked ? undefined : work.fandoms,
+          type: "chapter",
+        },
+        waitingMsg,
+      );
+
+      scheduleInactivityReset(sentMessage, () =>
+        buildChapterEmbedDefaultPayload(
+          url,
+          message.guildId,
+          message.author.id,
+        ),
+      );
+    } catch (error) {
+      console.error(`Failed to build chapter embed for ${url}`);
+      console.error(error);
+      await showTemporaryNotice(
+        waitingMsg,
+        getAo3FailureNotice(error),
+        ERROR_MESSAGE_LIFETIME_MS,
+      ).catch(() => {});
     }
+  }
 }
 
 // Login to Discord and start bot.

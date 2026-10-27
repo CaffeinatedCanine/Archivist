@@ -13,7 +13,9 @@ export const data = new SlashCommandBuilder()
   .addStringOption((option) =>
     option
       .setName("scope")
-      .setDescription("Restart just this shard, or every shard. Defaults to this shard.")
+      .setDescription(
+        "Restart just this shard, or every shard. Defaults to this shard.",
+      )
       .addChoices(
         { name: "This shard", value: "shard" },
         { name: "All shards", value: "all" },
@@ -30,7 +32,8 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 
   if (!client.shard) {
     await interaction.reply({
-      content: "This client isn't running under a ShardingManager, so it can't be respawned this way.",
+      content:
+        "This client isn't running under a ShardingManager, so it can't be respawned this way.",
       flags: MessageFlags.Ephemeral,
     });
     return;

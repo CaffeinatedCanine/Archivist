@@ -31,14 +31,20 @@ function getRawBotEnv(): BotEnv {
 // blank token/clientId silently propagate into a Discord API call.
 export function getBotCredentials(): BotCredentials {
   const env = getRawBotEnv();
-  const token = env === "test" ? process.env.TOKEN_TEST : process.env.TOKEN_PROD;
-  const clientId = env === "test" ? process.env.CLIENT_ID_TEST : process.env.CLIENT_ID_PROD;
+  const token =
+    env === "test" ? process.env.TOKEN_TEST : process.env.TOKEN_PROD;
+  const clientId =
+    env === "test" ? process.env.CLIENT_ID_TEST : process.env.CLIENT_ID_PROD;
 
   if (!token || !clientId) {
     const tokenVar = env === "test" ? "TOKEN_TEST" : "TOKEN_PROD";
     const clientIdVar = env === "test" ? "CLIENT_ID_TEST" : "CLIENT_ID_PROD";
-    const missing = [!token && tokenVar, !clientId && clientIdVar].filter(Boolean).join(", ");
-    throw new Error(`Cannot start — BOT_ENV is "${env}" but ${missing} not set in .env.`);
+    const missing = [!token && tokenVar, !clientId && clientIdVar]
+      .filter(Boolean)
+      .join(", ");
+    throw new Error(
+      `Cannot start — BOT_ENV is "${env}" but ${missing} not set in .env.`,
+    );
   }
 
   return { env, token, clientId };

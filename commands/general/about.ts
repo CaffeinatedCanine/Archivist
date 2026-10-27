@@ -12,7 +12,7 @@ const settings = await import(
   { with: { type: "json" } }
 );
 
-// Construct text variables for 
+// Construct text variables for
 const launchDate = "16 Mar 2021";
 const serverURL = "https://discord.gg/FzhC9bVFva";
 const homepageURL = "https://www.archivistbot.com";
