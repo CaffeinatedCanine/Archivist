@@ -8,7 +8,7 @@ const RECENT_FAILURE_NOTICE =
   "⏳ AO3 just failed to load this a moment ago and hasn't had time to recover yet — try again in a few seconds.";
 
 const AO3_RATE_LIMITED_NOTICE =
-  "⏳ AO3 has asked me to slow down for a bit. Please try again in a minute or two!";
+  "🐢 AO3 has asked me to slow down for a bit. Please try again in a minute or two!";
 
 const AO3_BUSY_NOTICE =
   "🐢 AO3 is getting a lot of traffic right now, so I'm giving it a short break. Please try again in a minute or two!";
