@@ -16,4 +16,4 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
-      # - run: npm run format:check   # enable after the one-time format commit
+      - run: npm run format:check
