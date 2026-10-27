@@ -5,3 +5,4 @@ dist/
 .order
 data/
 *.db
+*/*.db
