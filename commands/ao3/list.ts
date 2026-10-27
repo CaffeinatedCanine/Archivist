@@ -48,7 +48,8 @@ async function getListSession(seriesId: string): Promise<ListSession> {
   const cached = sessionCache.get(seriesId);
   if (cached) return cached;
 
-  // Rate-limited fetch — long series can mean several AO3 requests.
+  // Long series can mean several AO3 requests; each one is rate-limited
+  // inside utils/cache.ts.
   const series = await cachedGetFullSeries(seriesId);
   const authors = constructCreators(series.authors, series.authors?.[0]?.anonymous);
   const seriesURL = getSeriesUrl({ seriesId });

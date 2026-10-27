@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 function parseDevUserIds(): Set<string> {
   const raw = process.env.DEV_USER_IDS;
   if (!raw) {
@@ -29,5 +30,5 @@ export function isDevUser(userId: string): boolean {
 
 export const devOnlyError = {
   content: "This command is restricted to bot developers.",
-  ephemeral: true,
+  flags: MessageFlags.Ephemeral as const,
 };

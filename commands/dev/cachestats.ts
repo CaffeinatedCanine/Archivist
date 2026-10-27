@@ -2,6 +2,7 @@ import {
   ChatInputCommandInteraction,
   EmbedBuilder,
   SlashCommandBuilder,
+  MessageFlags,
 } from "discord.js";
 import { devOnlyError, isDevUser } from "../../utils/devUsers.ts";
 
@@ -49,7 +50,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     return;
   }
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const perShard = (await interaction.client.shard!.broadcastEval(
     (c) => (c as any).getCacheStatsByType(),

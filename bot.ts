@@ -47,7 +47,6 @@ import {
 } from "./utils/urls.ts";
 import { ERROR_MESSAGE_LIFETIME_MS, getAo3FailureNotice } from "./utils/messageCleanup.ts";
 
-import { ao3Limiter } from "./utils/ao3Limiter.ts";
 import { authError } from "./utils/errors.ts";
 import {
   buildChapterEmbedComponents,
@@ -169,16 +168,12 @@ async function postWorkLink(message: any, url: string) {
     : null;
   const workId = getWorkDetailsFromUrl({ url }).workId;
 
-  // Queue both to the limiter immediately so gallery starts fetching right
-  // after the work embed, without waiting for message edits in between.
-  // The abort flag prevents the gallery from running if the work embed fails.
-  let abortGallery = !galleryEnabled;
-
-  // Normalized to EmbedBuilder[] either way so downstream handling (and
-  // ao3Limiter's return-type inference) doesn't need to branch on which
-  // embed style was built. Rating/tag restrictions are checked first so a
-  // blocked work never gets its embed built at all.
-  const workTask = ao3Limiter.schedule(async () => {
+  // Normalized to EmbedBuilder[] either way so downstream handling doesn't
+  // need to branch on which embed style was built. Rating/tag restrictions
+  // are checked first so a blocked work never gets its embed built at all.
+  // AO3 rate limiting happens per request inside utils/cache.ts, so cache
+  // hits here return right away instead of waiting in the queue.
+  const workTask = (async () => {
     const work = await cachedGetWork(workId);
     if (!work.locked) {
       if (!isRatingAllowed(bundle, work.rating)) {
@@ -206,22 +201,23 @@ async function postWorkLink(message: any, url: string) {
     if (!useLegacyEmbed) return buildWorkEmbedPages(url, message.guildId);
     const result = await buildLegacyWorkEmbed(url, message.guildId);
     return "locked" in result ? result : [result];
-  });
+  })();
+  // Starts right after the work embed is built, without waiting for message
+  // edits in between, and is skipped if the work turned out blocked/locked.
   const galleryTask = galleryEnabled
-    ? ao3Limiter.schedule(async () => {
-        if (abortGallery) return null;
+    ? workTask.then(async (result) => {
+        if ("blocked" in result || "locked" in result) return null;
         const work = await cachedGetWork(workId);
         const nsfwWarning = work.locked
           ? false
           : shouldShowNsfwWarning(bundle, work.rating, work.locked);
         return buildWorkGalleryPage(workId, url, 0, { nsfwWarning });
-      })
+      }, () => null) // the work embed's own .catch below reports the failure
     : null;
 
   workTask
     .then(async (result) => {
       if (result && "blocked" in result) {
-        abortGallery = true;
         await showTemporaryNotice(
           waitingMsg,
           `🚫 ${result.reason}`,
@@ -232,7 +228,6 @@ async function postWorkLink(message: any, url: string) {
       }
 
       if (result && "locked" in result) {
-        abortGallery = true;
         await waitingMsg.edit(authError);
         await galleryWaitingMsg?.delete().catch(() => {});
         return;
@@ -264,7 +259,6 @@ async function postWorkLink(message: any, url: string) {
       }
     })
     .catch(async (error) => {
-      abortGallery = true;
       console.error(`Failed to build work embed for ${url}`, error);
       await showTemporaryNotice(waitingMsg, getAo3FailureNotice(error), ERROR_MESSAGE_LIFETIME_MS).catch(() => {});
       await galleryWaitingMsg?.delete().catch(() => {});
@@ -351,7 +345,7 @@ async function handleMessageCreate(message: any) {
         const waitingMsg = await message.channel.send("⏳ Fetching from AO3...");
         try {
           const username = getUsernameFromUrl(url);
-          const pages = await ao3Limiter.schedule(() => buildUserEmbedPages(username, message.guildId));
+          const pages = await buildUserEmbedPages(username, message.guildId);
           const { message: sentMessage } = await sendRedirectableEmbed(
             message,
             {
@@ -380,9 +374,10 @@ async function handleMessageCreate(message: any) {
         const waitingMsg = await message.channel.send("⏳ Fetching from AO3...");
         try {
           const seriesId = getSeriesIdFromUrl(url);
-          const [result, series] = await ao3Limiter.schedule(() =>
-            Promise.all([buildSeriesEmbedPages(url, message.guildId), cachedGetSeries(seriesId)]),
-          );
+          const [result, series] = await Promise.all([
+            buildSeriesEmbedPages(url, message.guildId),
+            cachedGetSeries(seriesId),
+          ]);
           const fandoms = [...new Set(series.works.flatMap((w) => w.fandoms))];
           const components =
             result.pages.length > 1
@@ -538,7 +533,7 @@ async function handleWorkOrChapterChoice(
           }
         }
 
-        const result = await ao3Limiter.schedule(() => buildChapterEmbedPages(url, message.guildId));
+        const result = await buildChapterEmbedPages(url, message.guildId);
 
         if ("locked" in result) {
           await waitingMsg.edit(authError);

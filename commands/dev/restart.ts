@@ -1,6 +1,7 @@
 import {
   ChatInputCommandInteraction,
   SlashCommandBuilder,
+  MessageFlags,
 } from "discord.js";
 import { devOnlyError, isDevUser } from "../../utils/devUsers.ts";
 
@@ -30,7 +31,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   if (!client.shard) {
     await interaction.reply({
       content: "This client isn't running under a ShardingManager, so it can't be respawned this way.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -45,7 +46,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       scope === "all"
         ? "Restarting all shards — this'll take a few seconds per shard, picking up whatever's currently built in `dist/`."
         : `Restarting shard ${client.shard.ids[0]} — back in a few seconds, picking up whatever's currently built in \`dist/\`.`,
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   });
 
   if (scope === "all") {

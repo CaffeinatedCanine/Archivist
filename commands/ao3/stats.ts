@@ -1,6 +1,5 @@
 import {
   ChatInputCommandInteraction,
-  EmbedBuilder,
   SlashCommandBuilder,
 } from "discord.js";
 import { ao3WorkError, authError } from "../../utils/errors.ts";

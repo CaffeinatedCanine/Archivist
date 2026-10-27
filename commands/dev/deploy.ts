@@ -1,6 +1,7 @@
 import {
   ChatInputCommandInteraction,
   SlashCommandBuilder,
+  MessageFlags,
 } from "discord.js";
 import { devOnlyError, isDevUser } from "../../utils/devUsers.ts";
 
@@ -18,7 +19,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     return;
   }
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   try {
     const result = await deployCommands();

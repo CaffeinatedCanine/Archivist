@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import { oneLine } from "common-tags";
 
 // Constructs and exports the error message used when the link provided is not for an AO3 Work.
@@ -6,7 +7,7 @@ const ao3WorkMessage = oneLine`🛑 That does not appear to be a link to an AO3 
 	or using a non-AO3 link.`;
 export const ao3WorkError = {
   content: ao3WorkMessage,
-  ephemeral: true,
+  flags: MessageFlags.Ephemeral as const,
 };
 
 // Constructs and exports the error message used when the link provided is not for an AO3 Series.
@@ -15,7 +16,7 @@ const ao3SeriesMessage = oneLine`🛑 That does not appear to be a link to an AO
 	or using a non-AO3 link.`;
 export const ao3SeriesError = {
   content: ao3SeriesMessage,
-  ephemeral: true,
+  flags: MessageFlags.Ephemeral as const,
 };
 
 // Constructs and exports the error message used with the user must be authenticated to see an AO3 Work.

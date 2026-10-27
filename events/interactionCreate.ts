@@ -1,4 +1,4 @@
-import { BaseInteraction, Events } from "discord.js";
+import { BaseInteraction, Events, MessageFlags } from "discord.js";
 import {
   handleRestrictionsModalSubmit,
   handleSettingsPanelButtonInteraction,
@@ -11,6 +11,7 @@ import {
 } from "../utils/images.ts";
 
 import type { ClientWithCommands } from "../bot.ts";
+import { getCommandFailureNotice } from "../utils/messageCleanup.ts";
 import { handleChapterEmbedButtonInteraction } from "../utils/embeds/chapterEmbed.ts";
 import { handleHelpButtonInteraction } from "../commands/general/help.ts";
 import { handleListButtonInteraction, handleListSelectInteraction } from "../commands/ao3/list.ts";
@@ -83,5 +84,11 @@ export const execute = async (interaction: BaseInteraction) => {
   } catch (error) {
     console.error(`Error executing ${interaction.commandName}`);
     console.error(error);
+    // Otherwise a deferred reply would sit on "thinking..." forever.
+    const content = getCommandFailureNotice(error);
+    const reply = interaction.deferred || interaction.replied
+      ? interaction.editReply({ content })
+      : interaction.reply({ content, flags: MessageFlags.Ephemeral });
+    await reply.catch(() => {});
   }
 };
