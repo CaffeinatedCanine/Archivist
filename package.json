@@ -10,7 +10,11 @@
     "test": "npm run build && npm run start",
     "register": "node dist/deploy-commands.js",
     "migrate:v1": "node dist/scripts/migrate-from-v1.js",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@fujocoded/ao3.js": "^0.24.0",
@@ -24,19 +28,21 @@
     "drizzle-orm": "^0.45.4",
     "mysql2": "^3.24.5",
     "node-cron": "^4.6.0",
-    "dotenv": "^18.0.7",
-    "drizzle-orm": "^0.45.4",
-    "mysql2": "^3.24.5",
     "turndown": "^7.2.4"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/common-tags": "^1.8.4",
     "@types/node": "^26.6.5",
     "@types/turndown": "^5.0.6",
     "drizzle-kit": "^0.31.11",
     "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
     "patch-package": "^8.0.1",
+    "prettier": "^3.9.10",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1"
   }
 }

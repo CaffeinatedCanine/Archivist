@@ -1,6 +1,7 @@
 import { getSeries, getUser, getWork, getWorkContent, setFetcher } from "@fujocoded/ao3.js";
-import { ao3Limiter } from "./ao3Limiter.ts";
 import { recordAo3Request, recordCacheHit, recordError } from "./cacheStats.ts";
+
+import { ao3Limiter } from "./ao3Limiter.ts";
 
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
@@ -304,7 +305,7 @@ export async function fetchAo3Text(url: string, cookie: string = ""): Promise<st
         response = await fetch(url, { headers, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
       } catch (error) {
         if (error instanceof Error && error.name === "TimeoutError") {
-          throw new Error(`AO3 request timed out after ${FETCH_TIMEOUT_MS / 1000}s for ${url}`);
+          throw new Error(`AO3 request timed out after ${FETCH_TIMEOUT_MS / 1000}s for ${url}`, {cause: error});
         }
         throw error;
       }

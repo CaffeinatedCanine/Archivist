@@ -7,19 +7,18 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
 } from "discord.js";
-import { getWorkUrl } from "@fujocoded/ao3.js/urls";
-
-import { ao3Embed } from "./baseEmbed.ts";
-import { Cache, cachedGetWork, fetchAo3Text } from "./cache.ts";
-import { embedColor } from "./ratings.ts";
-import { getGuildSettingsBundle, isFieldEnabled, shouldShowNsfwWarning } from "./embedFields.ts";
-import { scheduleInactivityReset } from "./inactivityReset.ts";
-
 import type {
   ButtonInteraction,
   EmbedBuilder,
   StringSelectMenuInteraction,
 } from "discord.js";
+import { Cache, cachedGetWork, fetchAo3Text } from "./cache.ts";
+import { getGuildSettingsBundle, isFieldEnabled, shouldShowNsfwWarning } from "./embedFields.ts";
+
+import { ao3Embed } from "./baseEmbed.ts";
+import { embedColor } from "./ratings.ts";
+import { getWorkUrl } from "@fujocoded/ao3.js/urls";
+import { scheduleInactivityReset } from "./inactivityReset.ts";
 
 type CacheKey = string | number;
 
@@ -50,6 +49,7 @@ export function optimizeImageUrl(src: string): string {
       }
       return url.toString();
     }
+	/* eslint-disable-next-line no-empty */
   } catch {}
   return src;
 }

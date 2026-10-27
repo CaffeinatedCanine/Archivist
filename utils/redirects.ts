@@ -1,9 +1,9 @@
 import { and, eq } from "drizzle-orm";
-import { randomUUID } from "node:crypto";
+import { guildSettings, redirectRules } from "../db/schema.ts";
 
 import { db } from "../db/index.ts";
-import { guildSettings, redirectRules } from "../db/schema.ts";
 import { getOrCreateGuildSettingsId } from "./settings.ts";
+import { randomUUID } from "node:crypto";
 
 const MAX_RULES_PER_GUILD = 25;
 
@@ -104,7 +104,7 @@ export async function addRedirectRule(
     });
   } catch (error) {
     console.error(`Failed to save redirect rule for guild ${guildId}.`, error);
-    throw new Error("Couldn't save the redirect rule, please try again.");
+    throw new Error("Couldn't save the redirect rule, please try again.", {cause: error});
   }
 
   invalidateRuleCache(guildId);
