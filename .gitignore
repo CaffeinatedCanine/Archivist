@@ -4,3 +4,5 @@ dist/
 .vscode
 .order
 data/
+*.db
+*/*.db
