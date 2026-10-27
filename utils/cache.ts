@@ -28,11 +28,16 @@ type WorkContentData = Awaited<ReturnType<typeof getWorkContent>>;
 // link don't each trigger a fresh AO3 request.
 const FAILURE_TTL_MS = 15 * 1000;
 
-// Thrown instead of contacting AO3 while it's rate-limiting us or our own
-// queue is too long to answer in reasonable time. Not the item's fault, so
-// it doesn't start the per-item failure cooldown below.
+// "rateLimited": AO3 is limiting the bot's own requests (429/502).
+// "overloaded": AO3 is struggling for everyone (503/529), or our own queue
+// is too long to answer in reasonable time.
+export type Ao3BusyReason = "rateLimited" | "overloaded";
+
+// Thrown instead of contacting AO3 while it's asked us to back off or our
+// own queue is too long. Not the item's fault, so it doesn't start the
+// per-item failure cooldown below.
 export class Ao3BusyError extends Error {
-  constructor() {
+  constructor(readonly reason: Ao3BusyReason = "overloaded") {
     super("AO3 is busy; not sending more requests for now.");
     this.name = "Ao3BusyError";
   }
@@ -253,12 +258,24 @@ const FETCH_TIMEOUT_MS = 30 * 1000;
 // Ao3BusyError. At one request per 2.5s that's roughly a 40s wait.
 const MAX_QUEUED_REQUESTS = 15;
 
-// When AO3 answers 429 without a usable Retry-After, pause this long.
+// AO3/Cloudflare statuses meaning "too much traffic, back off". 429 and 502
+// mean AO3 is rate-limiting the bot (502 bad gateway is in practice AO3's
+// usual rate-limit answer, rather than 429); 503 service unavailable and
+// 529 site overloaded mean AO3 itself is overloaded.
+const BACK_OFF_STATUSES = new Map<number, Ao3BusyReason>([
+  [429, "rateLimited"],
+  [502, "rateLimited"],
+  [503, "overloaded"],
+  [529, "overloaded"],
+]);
+
+// When AO3 sends one of those without a usable Retry-After, pause this long.
 const DEFAULT_RATE_LIMIT_PAUSE_MS = 60 * 1000;
 const MAX_RATE_LIMIT_PAUSE_MS = 10 * MINUTE_MS;
 
 // While set, every request on this shard is refused without reaching AO3.
 let ao3PausedUntil = 0;
+let ao3PauseReason: Ao3BusyReason = "overloaded";
 
 function pauseFromRetryAfter(header: string | null): number {
   if (header) {
@@ -276,12 +293,11 @@ export async function fetchAo3Text(url: string, cookie: string = ""): Promise<st
   return withRetry(async () => {
     // RECEIVED counts jobs Bottleneck hasn't moved into its queue yet.
     const { RECEIVED, QUEUED } = ao3Limiter.counts();
-    if (Date.now() < ao3PausedUntil || RECEIVED + QUEUED >= MAX_QUEUED_REQUESTS) {
-      throw new Ao3BusyError();
-    }
+    if (Date.now() < ao3PausedUntil) throw new Ao3BusyError(ao3PauseReason);
+    if (RECEIVED + QUEUED >= MAX_QUEUED_REQUESTS) throw new Ao3BusyError("overloaded");
     return ao3Limiter.schedule(async () => {
       // A pause can start while this request was waiting in the queue.
-      if (Date.now() < ao3PausedUntil) throw new Ao3BusyError();
+      if (Date.now() < ao3PausedUntil) throw new Ao3BusyError(ao3PauseReason);
       const headers = cookie ? { ...BROWSER_HEADERS, Cookie: cookie } : BROWSER_HEADERS;
       let response: Response;
       try {
@@ -292,11 +308,14 @@ export async function fetchAo3Text(url: string, cookie: string = ""): Promise<st
         }
         throw error;
       }
-      if (response.status === 429) {
+      const backOffReason = BACK_OFF_STATUSES.get(response.status);
+      if (backOffReason) {
         const pauseMs = pauseFromRetryAfter(response.headers.get("Retry-After"));
         ao3PausedUntil = Date.now() + pauseMs;
-        console.warn(`AO3 rate-limited us (429); pausing requests for ${Math.round(pauseMs / 1000)}s`);
-        throw new Ao3BusyError();
+        ao3PauseReason = backOffReason;
+        const what = backOffReason === "rateLimited" ? "rate-limited us" : "is overloaded";
+        console.warn(`AO3 ${what} (HTTP ${response.status}); pausing requests for ${Math.round(pauseMs / 1000)}s`);
+        throw new Ao3BusyError(backOffReason);
       }
       if (!response.ok) {
         throw new Error(`AO3 returned HTTP ${response.status} for ${url}`);

@@ -7,13 +7,18 @@ const GENERIC_AO3_FAILURE_NOTICE = "⚠️ Something went wrong fetching that fr
 const RECENT_FAILURE_NOTICE =
   "⏳ AO3 just failed to load this a moment ago and hasn't had time to recover yet — try again in a few seconds.";
 
+const AO3_RATE_LIMITED_NOTICE =
+  "⏳ AO3 has asked me to slow down for a bit. Please try again in a minute or two!";
+
 const AO3_BUSY_NOTICE =
   "🐢 AO3 is getting a lot of traffic right now, so I'm giving it a short break. Please try again in a minute or two!";
 
 // Fresh failure vs. still-in-cooldown from a moments-ago attempt vs. AO3
 // (or our own queue) being too busy to take the request at all.
 export function getAo3FailureNotice(error: unknown): string {
-  if (error instanceof Ao3BusyError) return AO3_BUSY_NOTICE;
+  if (error instanceof Ao3BusyError) {
+    return error.reason === "rateLimited" ? AO3_RATE_LIMITED_NOTICE : AO3_BUSY_NOTICE;
+  }
   return error instanceof RecentFailureError ? RECENT_FAILURE_NOTICE : GENERIC_AO3_FAILURE_NOTICE;
 }
 
