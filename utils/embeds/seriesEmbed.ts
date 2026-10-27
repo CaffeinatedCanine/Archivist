@@ -1,7 +1,17 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  MessageFlags,
+} from "discord.js";
 import type { ButtonInteraction, EmbedBuilder } from "discord.js";
 import { formatCompletionStatus, startedDate, updatedAt } from "../statuses.ts";
-import { getFieldMaxLength, getGuildSettingsBundle, getSeriesDefaultTab, isFieldEnabled } from "../embedFields.ts";
+import {
+  getFieldMaxLength,
+  getGuildSettingsBundle,
+  getSeriesDefaultTab,
+  isFieldEnabled,
+} from "../embedFields.ts";
 import type { SeriesDefaultTab } from "../embedFields.ts";
 
 import { ao3Embed } from "../baseEmbed.ts";
@@ -11,15 +21,26 @@ import { constructCreators } from "../creators.ts";
 import { getSeriesIdFromUrl } from "../urls.ts";
 import { htmlToMarkdown } from "../htmlToMarkdown.ts";
 import { scheduleInactivityReset } from "../inactivityReset.ts";
-import { getAo3FailureNotice, scheduleMessageDeletion } from "../messageCleanup.ts";
+import {
+  getAo3FailureNotice,
+  scheduleMessageDeletion,
+} from "../messageCleanup.ts";
 import { truncateText } from "../truncate.ts";
 
-type SeriesFieldEntry = { key: string; name: string; value: string; inline: boolean };
+type SeriesFieldEntry = {
+  key: string;
+  name: string;
+  value: string;
+  inline: boolean;
+};
 type CacheKey = string | number;
 
 const CHUNK_LENGTH = 750;
 
-async function computeSeriesFieldData(seriesURL: string, guildId?: string | null) {
+async function computeSeriesFieldData(
+  seriesURL: string,
+  guildId?: string | null,
+) {
   const seriesId = getSeriesIdFromUrl(seriesURL);
   const series = await cachedGetSeries(seriesId);
   const bundle = await getGuildSettingsBundle(guildId);
@@ -35,9 +56,14 @@ async function computeSeriesFieldData(seriesURL: string, guildId?: string | null
   const notesSource = rawDescription ? rawNotes : null;
   const descriptionSource = rawDescription || rawNotes;
 
-  const notesText = notesSource ? truncateText(notesSource, getFieldMaxLength(bundle, "series", "notes")) : null;
+  const notesText = notesSource
+    ? truncateText(notesSource, getFieldMaxLength(bundle, "series", "notes"))
+    : null;
   const descriptionText = descriptionSource
-    ? truncateText(descriptionSource, getFieldMaxLength(bundle, "series", "description"))
+    ? truncateText(
+        descriptionSource,
+        getFieldMaxLength(bundle, "series", "description"),
+      )
     : null;
 
   const descriptionLines = [
@@ -48,11 +74,31 @@ async function computeSeriesFieldData(seriesURL: string, guildId?: string | null
     .join("\n");
 
   const statsFields: SeriesFieldEntry[] = [
-    { key: "started", name: "Started", value: startedDate(series), inline: true },
+    {
+      key: "started",
+      name: "Started",
+      value: startedDate(series),
+      inline: true,
+    },
     { key: "updated", name: "Updated", value: updatedAt(series), inline: true },
-    { key: "complete", name: "Status", value: `${formatCompletionStatus(series)}`, inline: true },
-    { key: "workCount", name: "Works", value: `${series.workCount.toLocaleString()}`, inline: true },
-    { key: "wordCount", name: "Total Words", value: `${series.words.toLocaleString()}`, inline: true },
+    {
+      key: "complete",
+      name: "Status",
+      value: `${formatCompletionStatus(series)}`,
+      inline: true,
+    },
+    {
+      key: "workCount",
+      name: "Works",
+      value: `${series.workCount.toLocaleString()}`,
+      inline: true,
+    },
+    {
+      key: "wordCount",
+      name: "Total Words",
+      value: `${series.words.toLocaleString()}`,
+      inline: true,
+    },
     {
       key: "bookmarks",
       name: "Bookmarks",
@@ -62,7 +108,8 @@ async function computeSeriesFieldData(seriesURL: string, guildId?: string | null
   ].filter((f) => isFieldEnabled(bundle, "series", f.key));
 
   const notesEnabled = !!notesText && isFieldEnabled(bundle, "series", "notes");
-  const descriptionEnabled = !!descriptionText && isFieldEnabled(bundle, "series", "description");
+  const descriptionEnabled =
+    !!descriptionText && isFieldEnabled(bundle, "series", "description");
 
   return {
     seriesId,
@@ -100,7 +147,9 @@ export async function buildSeriesEmbedPages(
 
   const statsEmbed = ao3Embed().setTitle(seriesName).setURL(url);
   if (descriptionLines) statsEmbed.setDescription(descriptionLines);
-  statsEmbed.addFields(statsFields.map(({ name, value, inline }) => ({ name, value, inline })));
+  statsEmbed.addFields(
+    statsFields.map(({ name, value, inline }) => ({ name, value, inline })),
+  );
 
   const pages: EmbedBuilder[] = [statsEmbed];
 
@@ -109,7 +158,9 @@ export async function buildSeriesEmbedPages(
     const chunks = chunkTextMerged(notesText, CHUNK_LENGTH);
     notesPageCount = chunks.length;
     for (const chunk of chunks) {
-      pages.push(ao3Embed().setTitle(seriesName).setURL(url).setDescription(chunk));
+      pages.push(
+        ao3Embed().setTitle(seriesName).setURL(url).setDescription(chunk),
+      );
     }
   }
 
@@ -118,7 +169,9 @@ export async function buildSeriesEmbedPages(
     const chunks = chunkTextMerged(descriptionText, CHUNK_LENGTH);
     descriptionPageCount = chunks.length;
     for (const chunk of chunks) {
-      pages.push(ao3Embed().setTitle(seriesName).setURL(url).setDescription(chunk));
+      pages.push(
+        ao3Embed().setTitle(seriesName).setURL(url).setDescription(chunk),
+      );
     }
   }
 
@@ -137,7 +190,8 @@ export function buildSeriesEmbedComponents(
   const totalPages = descriptionStart + descriptionPageCount;
 
   const onStats = page === 0;
-  const onNotes = notesPageCount > 0 && page >= notesStart && page < descriptionStart;
+  const onNotes =
+    notesPageCount > 0 && page >= notesStart && page < descriptionStart;
   const onDescription = descriptionPageCount > 0 && page >= descriptionStart;
 
   const tabButtons = [
@@ -169,7 +223,9 @@ export function buildSeriesEmbedComponents(
     );
   }
 
-  const tabRow = new ActionRowBuilder<ButtonBuilder>().addComponents(tabButtons);
+  const tabRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    tabButtons,
+  );
 
   const navRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
@@ -197,7 +253,8 @@ function resolveSeriesDefaultPage(
   const notesStart = 1;
   const descriptionStart = notesStart + notesPageCount;
   if (defaultTab === "notes" && notesPageCount > 0) return notesStart;
-  if (defaultTab === "description" && descriptionPageCount > 0) return descriptionStart;
+  if (defaultTab === "description" && descriptionPageCount > 0)
+    return descriptionStart;
   return 0;
 }
 
@@ -206,13 +263,20 @@ export async function buildSeriesEmbedDefaultPayload(
   seriesURL: string,
   guildId: string | null | undefined,
   ownerId: string,
-): Promise<{ embeds: EmbedBuilder[]; components: ReturnType<typeof buildSeriesEmbedComponents> | [] } | null> {
+): Promise<{
+  embeds: EmbedBuilder[];
+  components: ReturnType<typeof buildSeriesEmbedComponents> | [];
+} | null> {
   const bundle = await getGuildSettingsBundle(guildId);
   const defaultTab = getSeriesDefaultTab(bundle);
   if (defaultTab === "none") return null;
 
   const result = await buildSeriesEmbedPages(seriesURL, guildId);
-  const page = resolveSeriesDefaultPage(result.notesPageCount, result.descriptionPageCount, defaultTab);
+  const page = resolveSeriesDefaultPage(
+    result.notesPageCount,
+    result.descriptionPageCount,
+    defaultTab,
+  );
   if (page === null) return null;
 
   const seriesId = getSeriesIdFromUrl(seriesURL);
@@ -220,7 +284,13 @@ export async function buildSeriesEmbedDefaultPayload(
     embeds: [result.pages[page]],
     components:
       result.pages.length > 1
-        ? buildSeriesEmbedComponents(ownerId, page, result.notesPageCount, result.descriptionPageCount, seriesId)
+        ? buildSeriesEmbedComponents(
+            ownerId,
+            page,
+            result.notesPageCount,
+            result.descriptionPageCount,
+            seriesId,
+          )
         : [],
   };
 }

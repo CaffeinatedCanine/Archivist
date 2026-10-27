@@ -1,14 +1,17 @@
-type WorkTagSource = {
-  locked?: boolean;
-  category?: string[] | null;
-  fandoms?: string[] | null;
-  tags?: {
-    warnings?: string[] | null;
-    characters?: string[] | null;
-    relationships?: string[] | null;
-    additional?: string[] | null;
-  } | null;
-} | null | undefined;
+type WorkTagSource =
+  | {
+      locked?: boolean;
+      category?: string[] | null;
+      fandoms?: string[] | null;
+      tags?: {
+        warnings?: string[] | null;
+        characters?: string[] | null;
+        relationships?: string[] | null;
+        additional?: string[] | null;
+      } | null;
+    }
+  | null
+  | undefined;
 
 function formatTagList(
   work: WorkTagSource,

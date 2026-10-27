@@ -13,7 +13,10 @@ function getDevServerIds(): string[] {
 
   try {
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || !parsed.every((id) => typeof id === "string")) {
+    if (
+      !Array.isArray(parsed) ||
+      !parsed.every((id) => typeof id === "string")
+    ) {
       throw new Error("DEV_SERVERS must be a JSON array of strings");
     }
     return parsed;
@@ -51,7 +54,8 @@ export interface DeployResult {
 // with Discord. Safe to call repeatedly — re-registering is idempotent.
 export async function deployCommands(): Promise<DeployResult> {
   const commandsRoot = getCommandsRoot();
-  const folders = fs.readdirSync(commandsRoot, { withFileTypes: true })
+  const folders = fs
+    .readdirSync(commandsRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name);
 
@@ -60,7 +64,9 @@ export async function deployCommands(): Promise<DeployResult> {
 
   for (const folder of folders) {
     const folderPath = path.join(commandsRoot, folder);
-    const files = fs.readdirSync(folderPath).filter((file) => file.endsWith(".js"));
+    const files = fs
+      .readdirSync(folderPath)
+      .filter((file) => file.endsWith(".js"));
 
     for (const file of files) {
       const filePath = path.join(folderPath, file);
@@ -85,7 +91,9 @@ export async function deployCommands(): Promise<DeployResult> {
   const { token, clientId } = getBotCredentials();
   const rest = new REST().setToken(token);
 
-  await rest.put(Routes.applicationCommands(clientId), { body: globalCommands });
+  await rest.put(Routes.applicationCommands(clientId), {
+    body: globalCommands,
+  });
 
   const devServerResults: DevServerResult[] = [];
   const devServerIds = getDevServerIds();
@@ -94,9 +102,12 @@ export async function deployCommands(): Promise<DeployResult> {
   if (devCommands.length > 0 && !skippedDevServers) {
     for (const guildId of devServerIds) {
       try {
-        const data = await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
-          body: devCommands,
-        });
+        const data = await rest.put(
+          Routes.applicationGuildCommands(clientId, guildId),
+          {
+            body: devCommands,
+          },
+        );
         devServerResults.push({ guildId, count: (data as unknown[]).length });
       } catch (error) {
         devServerResults.push({

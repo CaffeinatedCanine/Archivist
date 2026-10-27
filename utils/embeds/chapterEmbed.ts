@@ -1,7 +1,17 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  MessageFlags,
+} from "discord.js";
 import type { ButtonInteraction, EmbedBuilder } from "discord.js";
 import { cachedGetWorkChapter, cachedGetWorkContent } from "../cache.ts";
-import { chapterDisplay, formatCompletionStatus, publishedDate, updatedAt } from "../statuses.ts";
+import {
+  chapterDisplay,
+  formatCompletionStatus,
+  publishedDate,
+  updatedAt,
+} from "../statuses.ts";
 import { embedColor, ratingIcon } from "../ratings.ts";
 import { extractImagesFromHtml, optimizeImageUrl } from "../images.ts";
 import {
@@ -11,8 +21,16 @@ import {
   formatTags,
   formatWarnings,
 } from "../tags.ts";
-import { getAo3FailureNotice, scheduleMessageDeletion } from "../messageCleanup.ts";
-import { getChapterDefaultTab, getFieldMaxLength, getGuildSettingsBundle, isFieldEnabled } from "../embedFields.ts";
+import {
+  getAo3FailureNotice,
+  scheduleMessageDeletion,
+} from "../messageCleanup.ts";
+import {
+  getChapterDefaultTab,
+  getFieldMaxLength,
+  getGuildSettingsBundle,
+  isFieldEnabled,
+} from "../embedFields.ts";
 import { getWorkDetailsFromUrl, getWorkUrl } from "@fujocoded/ao3.js/urls";
 
 import type { ChapterDefaultTab } from "../embedFields.ts";
@@ -27,13 +45,21 @@ import { scheduleInactivityReset } from "../inactivityReset.ts";
 import { stripIndents } from "common-tags";
 import { truncateText } from "../truncate.ts";
 
-type ChapterFieldEntry = { key: string; name: string; value: string; inline: boolean };
+type ChapterFieldEntry = {
+  key: string;
+  name: string;
+  value: string;
+  inline: boolean;
+};
 type CacheKey = string | number;
 type ContentTabLabel = "Summary" | "Notes" | null;
 
 const CHUNK_LENGTH = 750;
 
-async function computeChapterFieldData(workURL: string, guildId?: string | null) {
+async function computeChapterFieldData(
+  workURL: string,
+  guildId?: string | null,
+) {
   const { workId, chapterId } = getWorkDetailsFromUrl({ url: workURL });
   const work = await cachedGetWorkChapter(workId, chapterId);
 
@@ -44,7 +70,8 @@ async function computeChapterFieldData(workURL: string, guildId?: string | null)
   const color = embedColor(work);
 
   const creators =
-    constructCreators(work.authors, work.authors?.[0]?.anonymous) || "Anonymous";
+    constructCreators(work.authors, work.authors?.[0]?.anonymous) ||
+    "Anonymous";
   const series = formatWorkSeries(work);
   const chapterWords = countChapterWords(content.content);
   const totalWords = work.words.toString();
@@ -67,7 +94,8 @@ async function computeChapterFieldData(workURL: string, guildId?: string | null)
     : null;
 
   const noteParts = [
-    content.startNotes && `**Beginning:**\n${htmlToMarkdown(content.startNotes)}`,
+    content.startNotes &&
+      `**Beginning:**\n${htmlToMarkdown(content.startNotes)}`,
     content.endNotes && `**End:**\n${htmlToMarkdown(content.endNotes)}`,
   ].filter(Boolean);
   const rawNotes = noteParts.length ? noteParts.join("\n\n") : null;
@@ -89,7 +117,12 @@ async function computeChapterFieldData(workURL: string, guildId?: string | null)
 
   const statsFields: ChapterFieldEntry[] = [
     { key: "words", name: "Words", value: wordCount, inline: true },
-    { key: "chapters", name: "Chapters", value: chapterDisplay(work), inline: true },
+    {
+      key: "chapters",
+      name: "Chapters",
+      value: chapterDisplay(work),
+      inline: true,
+    },
     { key: "rating", name: "Rating", value: rating, inline: true },
     { key: "published", name: "Published", value: published, inline: true },
     { key: "updated", name: "Updated", value: updatedDate, inline: true },
@@ -102,7 +135,12 @@ async function computeChapterFieldData(workURL: string, guildId?: string | null)
     truncateText(s, getFieldMaxLength(bundle, "chapter-tags", key));
 
   const tagsFields: ChapterFieldEntry[] = [
-    { key: "fandoms", name: "Fandoms", value: truncateTag("fandoms", formatFandoms(work) || "N/A"), inline: false },
+    {
+      key: "fandoms",
+      name: "Fandoms",
+      value: truncateTag("fandoms", formatFandoms(work) || "N/A"),
+      inline: false,
+    },
     {
       key: "relationships",
       name: "Relationships",
@@ -115,17 +153,27 @@ async function computeChapterFieldData(workURL: string, guildId?: string | null)
       value: truncateTag("characters", formatCharacters(work) || "N/A"),
       inline: false,
     },
-    { key: "tags", name: "Additional Tags", value: truncateTag("tags", formatTags(work) || "N/A"), inline: false },
+    {
+      key: "tags",
+      name: "Additional Tags",
+      value: truncateTag("tags", formatTags(work) || "N/A"),
+      inline: false,
+    },
   ].filter((f) => isFieldEnabled(bundle, "chapter-tags", f.key));
 
-  const summaryEnabled = !!summaryText && isFieldEnabled(bundle, "chapter", "summary");
-  const notesEnabled = !!notesText && isFieldEnabled(bundle, "chapter", "notes");
+  const summaryEnabled =
+    !!summaryText && isFieldEnabled(bundle, "chapter", "summary");
+  const notesEnabled =
+    !!notesText && isFieldEnabled(bundle, "chapter", "notes");
 
   // Summary/Notes tab — Notes merges into Summary if both exist.
   let contentText: string | null = null;
   let contentTabLabel: ContentTabLabel = null;
   if (summaryEnabled && summaryText) {
-    contentText = notesEnabled && notesText ? `${summaryText}\n\n**Notes**\n${notesText}` : summaryText;
+    contentText =
+      notesEnabled && notesText
+        ? `${summaryText}\n\n**Notes**\n${notesText}`
+        : summaryText;
     contentTabLabel = "Summary";
   } else if (notesEnabled && notesText) {
     contentText = notesText;
@@ -134,11 +182,16 @@ async function computeChapterFieldData(workURL: string, guildId?: string | null)
 
   // Thumbnail — first embedded image.
   const thumbnailExcludedByRating =
-    (work.rating === "Mature" && isFieldEnabled(bundle, "chapter-thumbnail", "excludeMature")) ||
-    (work.rating === "Explicit" && isFieldEnabled(bundle, "chapter-thumbnail", "excludeExplicit"));
+    (work.rating === "Mature" &&
+      isFieldEnabled(bundle, "chapter-thumbnail", "excludeMature")) ||
+    (work.rating === "Explicit" &&
+      isFieldEnabled(bundle, "chapter-thumbnail", "excludeExplicit"));
 
   let thumbnailUrl: string | undefined;
-  if (isFieldEnabled(bundle, "chapter-thumbnail", "enabled") && !thumbnailExcludedByRating) {
+  if (
+    isFieldEnabled(bundle, "chapter-thumbnail", "enabled") &&
+    !thumbnailExcludedByRating
+  ) {
     const [firstImage] = extractImagesFromHtml(content.content);
     if (firstImage) thumbnailUrl = optimizeImageUrl(firstImage);
   }
@@ -189,7 +242,9 @@ export async function buildChapterEmbedPages(
     .setTitle(chapterTitle)
     .setURL(url)
     .setDescription(description)
-    .addFields(statsFields.map(({ name, value, inline }) => ({ name, value, inline })));
+    .addFields(
+      statsFields.map(({ name, value, inline }) => ({ name, value, inline })),
+    );
   if (thumbnailUrl) statsEmbed.setThumbnail(thumbnailUrl);
 
   const pages: EmbedBuilder[] = [statsEmbed];
@@ -200,7 +255,13 @@ export async function buildChapterEmbedPages(
       ao3Embed(color)
         .setTitle(chapterTitle)
         .setURL(url)
-        .addFields(tagsFields.map(({ name, value, inline }) => ({ name, value, inline }))),
+        .addFields(
+          tagsFields.map(({ name, value, inline }) => ({
+            name,
+            value,
+            inline,
+          })),
+        ),
     );
   }
 
@@ -209,7 +270,12 @@ export async function buildChapterEmbedPages(
     const chunks = chunkTextMerged(contentText, CHUNK_LENGTH);
     contentPageCount = chunks.length;
     for (const chunk of chunks) {
-      pages.push(ao3Embed(color).setTitle(chapterTitle).setURL(url).setDescription(chunk));
+      pages.push(
+        ao3Embed(color)
+          .setTitle(chapterTitle)
+          .setURL(url)
+          .setDescription(chunk),
+      );
     }
   }
 
@@ -245,7 +311,9 @@ export function buildChapterEmbedComponents(
   if (tagsPageCount > 0) {
     tabButtons.push(
       new ButtonBuilder()
-        .setCustomId(`chapteremd-tab:${ownerId}:${tagsStart}:${workId}:${chapterId}`)
+        .setCustomId(
+          `chapteremd-tab:${ownerId}:${tagsStart}:${workId}:${chapterId}`,
+        )
         .setLabel("Tags")
         .setStyle(onTags ? ButtonStyle.Primary : ButtonStyle.Secondary)
         .setDisabled(onTags),
@@ -255,23 +323,31 @@ export function buildChapterEmbedComponents(
   if (contentPageCount > 0 && contentTabLabel) {
     tabButtons.push(
       new ButtonBuilder()
-        .setCustomId(`chapteremd-tab:${ownerId}:${contentStart}:${workId}:${chapterId}`)
+        .setCustomId(
+          `chapteremd-tab:${ownerId}:${contentStart}:${workId}:${chapterId}`,
+        )
         .setLabel(contentTabLabel)
         .setStyle(onContent ? ButtonStyle.Primary : ButtonStyle.Secondary)
         .setDisabled(onContent),
     );
   }
 
-  const tabRow = new ActionRowBuilder<ButtonBuilder>().addComponents(tabButtons);
+  const tabRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    tabButtons,
+  );
 
   const navRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
-      .setCustomId(`chapteremd-nav:${ownerId}:${page - 1}:${workId}:${chapterId}`)
+      .setCustomId(
+        `chapteremd-nav:${ownerId}:${page - 1}:${workId}:${chapterId}`,
+      )
       .setLabel("Previous")
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(page <= 0),
     new ButtonBuilder()
-      .setCustomId(`chapteremd-nav:${ownerId}:${page + 1}:${workId}:${chapterId}`)
+      .setCustomId(
+        `chapteremd-nav:${ownerId}:${page + 1}:${workId}:${chapterId}`,
+      )
       .setLabel("Next")
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(page >= totalPages - 1),
@@ -299,7 +375,10 @@ export async function buildChapterEmbedDefaultPayload(
   workURL: string,
   guildId: string | null | undefined,
   ownerId: string,
-): Promise<{ embeds: EmbedBuilder[]; components: ReturnType<typeof buildChapterEmbedComponents> | [] } | null> {
+): Promise<{
+  embeds: EmbedBuilder[];
+  components: ReturnType<typeof buildChapterEmbedComponents> | [];
+} | null> {
   const bundle = await getGuildSettingsBundle(guildId);
   const defaultTab = getChapterDefaultTab(bundle);
   if (defaultTab === "none") return null;
@@ -307,7 +386,11 @@ export async function buildChapterEmbedDefaultPayload(
   const result = await buildChapterEmbedPages(workURL, guildId);
   if ("locked" in result) return null;
 
-  const page = resolveChapterDefaultPage(result.tagsPageCount, result.contentPageCount, defaultTab);
+  const page = resolveChapterDefaultPage(
+    result.tagsPageCount,
+    result.contentPageCount,
+    defaultTab,
+  );
   if (page === null) return null;
 
   const { workId, chapterId } = getWorkDetailsFromUrl({ url: workURL });
@@ -383,7 +466,10 @@ export const handleChapterEmbedButtonInteraction = async (
       );
     }
   } catch (error) {
-    console.error(`Failed to refresh chapter embed for ${workId}/${chapterId}`, error);
+    console.error(
+      `Failed to refresh chapter embed for ${workId}/${chapterId}`,
+      error,
+    );
     const failureMsg = await interaction
       .editReply({
         content: getAo3FailureNotice(error),

@@ -14,7 +14,10 @@ import type { ClientWithCommands } from "../bot.ts";
 import { getCommandFailureNotice } from "../utils/messageCleanup.ts";
 import { handleChapterEmbedButtonInteraction } from "../utils/embeds/chapterEmbed.ts";
 import { handleHelpButtonInteraction } from "../commands/general/help.ts";
-import { handleListButtonInteraction, handleListSelectInteraction } from "../commands/ao3/list.ts";
+import {
+  handleListButtonInteraction,
+  handleListSelectInteraction,
+} from "../commands/ao3/list.ts";
 import { handleSeriesEmbedButtonInteraction } from "../utils/embeds/seriesEmbed.ts";
 import { handleUserEmbedButtonInteraction } from "../utils/embeds/userEmbed.ts";
 import { handleWorkEmbedButtonInteraction } from "../utils/embeds/worksEmbed.ts";
@@ -62,7 +65,9 @@ export const execute = async (interaction: BaseInteraction) => {
     try {
       await command?.autocomplete?.(interaction);
     } catch (error) {
-      console.error(`Error handling autocomplete for ${interaction.commandName}`);
+      console.error(
+        `Error handling autocomplete for ${interaction.commandName}`,
+      );
       console.error(error);
     }
     return;
@@ -71,7 +76,7 @@ export const execute = async (interaction: BaseInteraction) => {
   if (!interaction.isChatInputCommand()) return;
 
   const command = (interaction.client as ClientWithCommands).commands.get(
-    interaction.commandName
+    interaction.commandName,
   );
 
   if (!command) {
@@ -86,9 +91,10 @@ export const execute = async (interaction: BaseInteraction) => {
     console.error(error);
     // Otherwise a deferred reply would sit on "thinking..." forever.
     const content = getCommandFailureNotice(error);
-    const reply = interaction.deferred || interaction.replied
-      ? interaction.editReply({ content })
-      : interaction.reply({ content, flags: MessageFlags.Ephemeral });
+    const reply =
+      interaction.deferred || interaction.replied
+        ? interaction.editReply({ content })
+        : interaction.reply({ content, flags: MessageFlags.Ephemeral });
     await reply.catch(() => {});
   }
 };

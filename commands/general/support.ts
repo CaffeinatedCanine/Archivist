@@ -5,7 +5,7 @@ import {
 } from "discord.js";
 import { oneLine, stripIndents } from "common-tags";
 
-import { getEmoji } from '../../utils/emojis.ts';
+import { getEmoji } from "../../utils/emojis.ts";
 
 export const data = new SlashCommandBuilder()
   .setName("support")
@@ -37,7 +37,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     .setTitle(`Support ${botName}`)
     .setDescription(
       oneLine`Thank you for wanting to support ${botName}. Below you'll find some
-        ideas for what you can do to help ${botName} grow!`
+        ideas for what you can do to help ${botName} grow!`,
     )
     .addFields([
       { name: "💡 HOW TO SUPPORT FOR FREE 💡", value: freeOptions },

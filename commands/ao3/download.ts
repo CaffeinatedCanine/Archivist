@@ -1,7 +1,4 @@
-import {
-  ChatInputCommandInteraction,
-  SlashCommandBuilder,
-} from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { ao3WorkError, authError } from "../../utils/errors.ts";
 import { getDownloadUrls, getWorkDetailsFromUrl } from "@fujocoded/ao3.js/urls";
 
@@ -14,7 +11,7 @@ import { stripIndents } from "common-tags";
 export const data = new SlashCommandBuilder()
   .setName("download")
   .setDescription(
-    "Provides a link so you can download a work with a specific format from AO3."
+    "Provides a link so you can download a work with a specific format from AO3.",
   )
   .addStringOption((option) =>
     option
@@ -26,14 +23,14 @@ export const data = new SlashCommandBuilder()
         { name: "EPUB", value: "epub" },
         { name: "HTML", value: "html" },
         { name: "MOBI", value: "mobi" },
-        { name: "PDF", value: "pdf" }
-      )
+        { name: "PDF", value: "pdf" },
+      ),
   )
   .addStringOption((option) =>
     option
       .setName("url")
       .setDescription("Provide the work link.")
-      .setRequired(true)
+      .setRequired(true),
   );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {

@@ -11,19 +11,18 @@ export const data = new SlashCommandBuilder()
   .setDescription("Get a link to invite the bot to your server");
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
+  const CLIENT_ID = process.env.CLIENT_ID_PROD;
+  if (!CLIENT_ID) {
+    throw new Error("Missing CLIENT_ID environment variable");
+  }
 
-const CLIENT_ID = process.env.CLIENT_ID_PROD;
-	if (!CLIENT_ID) {
-		throw new Error("Missing CLIENT_ID environment variable");
-	}
+  const botName = interaction.client.user?.username ?? "Archivist";
 
-	const botName = interaction.client.user?.username ?? "Archivist";
+  const inviteURL = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&scope=bot%20applications.commands&permissions=395137`;
 
-	const inviteURL = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&scope=bot%20applications.commands&permissions=395137`;
+  const link = `## [Click to Invite](${inviteURL}))`;
 
-	const link = `## [Click to Invite](${inviteURL}))`;
-
-		const description = stripIndents`*Want to invite ${botName} to your server? Use the link below!*
+  const description = stripIndents`*Want to invite ${botName} to your server? Use the link below!*
 
 		${link}`;
 

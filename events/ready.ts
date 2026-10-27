@@ -10,8 +10,9 @@ export const once = true;
 export const execute = async (client: ClientWithCommands) => {
   await loadEmojis(client);
   client.user?.setPresence({
-		activities: [{ name: `archivistbot.com`, type: ActivityType.Watching }],
-		status: 'online', });
+    activities: [{ name: `archivistbot.com`, type: ActivityType.Watching }],
+    status: "online",
+  });
   startOutageMonitor(client);
   console.log(`Ready! Logged in as ${client.user?.tag}`);
 };

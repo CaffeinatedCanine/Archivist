@@ -7,19 +7,22 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
 } from "discord.js";
-import { getWorkUrl } from "@fujocoded/ao3.js/urls";
-
-import { ao3Embed } from "./baseEmbed.ts";
-import { Cache, cachedGetWork, fetchAo3Text } from "./cache.ts";
-import { embedColor } from "./ratings.ts";
-import { getGuildSettingsBundle, isFieldEnabled, shouldShowNsfwWarning } from "./embedFields.ts";
-import { scheduleInactivityReset } from "./inactivityReset.ts";
-
 import type {
   ButtonInteraction,
   EmbedBuilder,
   StringSelectMenuInteraction,
 } from "discord.js";
+import { Cache, cachedGetWork, fetchAo3Text } from "./cache.ts";
+import {
+  getGuildSettingsBundle,
+  isFieldEnabled,
+  shouldShowNsfwWarning,
+} from "./embedFields.ts";
+
+import { ao3Embed } from "./baseEmbed.ts";
+import { embedColor } from "./ratings.ts";
+import { getWorkUrl } from "@fujocoded/ao3.js/urls";
+import { scheduleInactivityReset } from "./inactivityReset.ts";
 
 type CacheKey = string | number;
 
@@ -50,6 +53,7 @@ export function optimizeImageUrl(src: string): string {
       }
       return url.toString();
     }
+    /* eslint-disable-next-line no-empty */
   } catch {}
   return src;
 }
@@ -73,7 +77,13 @@ export interface GalleryResult {
 
 export function extractImagesFromHtml(html: string): string[] {
   return [...html.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*/gi)]
-    .map((m) => m[1].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"'))
+    .map((m) =>
+      m[1]
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"'),
+    )
     .filter((src) => src.startsWith("http://") || src.startsWith("https://"));
 }
 
@@ -112,7 +122,9 @@ export async function buildWorkGalleryPage(
   const clampedPage = Math.min(Math.max(pageIndex, 0), totalPages - 1);
 
   if (nsfwWarning && clampedPage === 0) {
-    console.log(`Gallery: work ${workId} page 1/${totalPages} [warning, no images]`);
+    console.log(
+      `Gallery: work ${workId} page 1/${totalPages} [warning, no images]`,
+    );
 
     const warningEmbed = ao3Embed(color)
       .setTitle(title)
@@ -135,7 +147,10 @@ export async function buildWorkGalleryPage(
   const footer = `Page ${clampedPage + 1} of ${totalPages} · Images ${start + 1}–${start + slice.length} of ${imageUrls.length}`;
 
   const embeds = slice.map((src, i) => {
-    const embed = ao3Embed(color).setTitle(title).setURL(workURL).setImage(optimizeImageUrl(src));
+    const embed = ao3Embed(color)
+      .setTitle(title)
+      .setURL(workURL)
+      .setImage(optimizeImageUrl(src));
     if (i === 0) embed.setFooter({ text: footer });
     return embed;
   });
@@ -157,7 +172,13 @@ function buildPageSelectRow(
   const windowStart =
     pageCount <= MAX_SELECT_OPTIONS
       ? 0
-      : Math.max(0, Math.min(page - Math.floor(MAX_SELECT_OPTIONS / 2), pageCount - MAX_SELECT_OPTIONS));
+      : Math.max(
+          0,
+          Math.min(
+            page - Math.floor(MAX_SELECT_OPTIONS / 2),
+            pageCount - MAX_SELECT_OPTIONS,
+          ),
+        );
   const windowEnd = Math.min(windowStart + MAX_SELECT_OPTIONS, pageCount);
 
   const options = [];
@@ -214,21 +235,33 @@ export async function buildGalleryDefaultPayload(
   workId: CacheKey,
   guildId: string | null | undefined,
   ownerId: string,
-): Promise<{ embeds: EmbedBuilder[]; files: AttachmentBuilder[]; components: ReturnType<typeof buildWorkGalleryComponents> | [] } | null> {
+): Promise<{
+  embeds: EmbedBuilder[];
+  files: AttachmentBuilder[];
+  components: ReturnType<typeof buildWorkGalleryComponents> | [];
+} | null> {
   const bundle = await getGuildSettingsBundle(guildId);
-  if (!isFieldEnabled(bundle, "work-inactivity", "galleryResetToFirstPage")) return null;
+  if (!isFieldEnabled(bundle, "work-inactivity", "galleryResetToFirstPage"))
+    return null;
 
   const work = await cachedGetWork(workId);
-  const nsfwWarning = work.locked ? false : shouldShowNsfwWarning(bundle, work.rating, work.locked);
+  const nsfwWarning = work.locked
+    ? false
+    : shouldShowNsfwWarning(bundle, work.rating, work.locked);
 
   const workURL = getWorkUrl({ workId });
-  const result = await buildWorkGalleryPage(workId, workURL, 0, { nsfwWarning });
+  const result = await buildWorkGalleryPage(workId, workURL, 0, {
+    nsfwWarning,
+  });
   if (!result) return null;
 
   return {
     embeds: result.page.embeds,
     files: result.page.files,
-    components: result.totalPages > 1 ? buildWorkGalleryComponents(ownerId, 0, result.totalPages, workId) : [],
+    components:
+      result.totalPages > 1
+        ? buildWorkGalleryComponents(ownerId, 0, result.totalPages, workId)
+        : [],
   };
 }
 
@@ -261,7 +294,11 @@ async function renderGalleryPage(
   const work = await cachedGetWork(workId);
   const nsfwWarning = work.locked
     ? false
-    : shouldShowNsfwWarning(await getGuildSettingsBundle(interaction.guildId), work.rating, work.locked);
+    : shouldShowNsfwWarning(
+        await getGuildSettingsBundle(interaction.guildId),
+        work.rating,
+        work.locked,
+      );
 
   const workURL = getWorkUrl({ workId });
   const result = await buildWorkGalleryPage(workId, workURL, currentPage, {
@@ -286,7 +323,12 @@ async function renderGalleryPage(
     files: result.page.files,
     components:
       result.totalPages > 1
-        ? buildWorkGalleryComponents(componentOwnerId, currentPage, result.totalPages, workId)
+        ? buildWorkGalleryComponents(
+            componentOwnerId,
+            currentPage,
+            result.totalPages,
+            workId,
+          )
         : [],
   });
 

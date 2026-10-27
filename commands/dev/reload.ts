@@ -21,18 +21,23 @@ const commandsRoot = path.join(__dirname, "..");
 
 export const data = new SlashCommandBuilder()
   .setName("reload")
-  .setDescription("[Dev] Reload one command's code, or all of them, without restarting the bot.")
+  .setDescription(
+    "[Dev] Reload one command's code, or all of them, without restarting the bot.",
+  )
   .addStringOption((option) =>
     option
       .setName("command")
-      .setDescription("Name of the command to reload. Leave blank to reload every command.")
+      .setDescription(
+        "Name of the command to reload. Leave blank to reload every command.",
+      )
       .setRequired(false),
   );
 
 // Searches every commands/<folder> for a file named `${commandName}.js`.
 // Returns the full path, or null if no matching file exists anywhere.
 function findCommandFile(commandName: string): string | null {
-  const folders = fs.readdirSync(commandsRoot, { withFileTypes: true })
+  const folders = fs
+    .readdirSync(commandsRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name);
 
@@ -49,7 +54,8 @@ function findCommandFile(commandName: string): string | null {
 // Full paths to every command file across every commands/<folder>, for the
 // reload-all path.
 function listAllCommandFiles(): string[] {
-  const folders = fs.readdirSync(commandsRoot, { withFileTypes: true })
+  const folders = fs
+    .readdirSync(commandsRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name);
 

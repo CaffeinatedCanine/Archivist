@@ -1,14 +1,14 @@
 Business Source License 1.1
 
-Licensor:             enigmalea and FoxInBoots
-Licensed Work:        Archivist 2.0
-                      The Licensed Work is (c) 2026 enigmalea and FoxInBoots
+Licensor: enigmalea and FoxInBoots
+Licensed Work: Archivist 2.0
+The Licensed Work is (c) 2026 enigmalea and FoxInBoots
 Additional Use Grant: You may use, copy, modify, and self-host the Licensed
-                      Work, including as a bot serving multiple Discord
-                      servers under your own control, and including
-                      providing dedicated or managed hosting of an instance
-                      of the Licensed Work to a third party for that third
-                      party's own use.
+Work, including as a bot serving multiple Discord
+servers under your own control, and including
+providing dedicated or managed hosting of an instance
+of the Licensed Work to a third party for that third
+party's own use.
 
                       You may NOT make the Licensed Work, or any modified
                       version of it, available to the public as a
@@ -18,9 +18,9 @@ Additional Use Grant: You may use, copy, modify, and self-host the Licensed
                       is instead restricted behind a paywall, subscription,
                       vote-gate, or other payment or engagement requirement.
 
-Change Date:          Four years from the date the Licensed Work is
-                      published.
-Change License:       Apache License, Version 2.0
+Change Date: Four years from the date the Licensed Work is
+published.
+Change License: Apache License, Version 2.0
 
 For information about alternative licensing arrangements, please contact
 admin@enigmalea.quest.
@@ -34,7 +34,7 @@ available under an Open Source License, as stated in this License.
 License text copyright (c) 2017 MariaDB Corporation Ab, All Rights Reserved.
 "Business Source License" is a trademark of MariaDB Corporation Ab.
 
------------------------------------------------------------------------------
+---
 
 Business Source License 1.1
 

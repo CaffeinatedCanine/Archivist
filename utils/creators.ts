@@ -21,10 +21,10 @@ export function constructCreators(
 ): string {
   const creators = Array.isArray(source)
     ? source
-    : source?.authors ?? source?.creators ?? [];
+    : (source?.authors ?? source?.creators ?? []);
 
   const isAnonymous =
-    anonymous ?? (Array.isArray(source) ? false : source?.anonymous ?? false);
+    anonymous ?? (Array.isArray(source) ? false : (source?.anonymous ?? false));
 
   if (isAnonymous) return "Anonymous";
   if (!creators.length) return "";

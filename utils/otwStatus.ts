@@ -66,14 +66,19 @@ let consecutiveFailures = 0;
 async function fetchJson<T>(url: string): Promise<T | null> {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(10_000),
+      });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       consecutiveFailures = 0;
       return (await response.json()) as T;
     } catch (error) {
       if (attempt === 1) {
         if (consecutiveFailures++ === 0) {
-          console.error(`otwstatus.org fetch failed (${url})`, (error as any)?.cause ?? error);
+          console.error(
+            `otwstatus.org fetch failed (${url})`,
+            (error as any)?.cause ?? error,
+          );
         }
         return null;
       }
@@ -87,11 +92,16 @@ async function fetchAo3Incidents(): Promise<Incident[] | null> {
   const data = await fetchJson<{ incidents: Incident[] }>(INCIDENTS_API_URL);
   if (!data) return null;
   return data.incidents.filter((incident) =>
-    incident.components.some((component) => component.name === AO3_COMPONENT_NAME),
+    incident.components.some(
+      (component) => component.name === AO3_COMPONENT_NAME,
+    ),
   );
 }
 
-function buildIncidentUpdateEmbed(incident: Incident, update: IncidentUpdate): EmbedBuilder {
+function buildIncidentUpdateEmbed(
+  incident: Incident,
+  update: IncidentUpdate,
+): EmbedBuilder {
   const label = UPDATE_STATUS_LABELS[update.status] ?? update.status;
   const color = UPDATE_STATUS_COLORS[update.status] ?? 0x2f3136;
   const isResolved = update.status === "resolved";
@@ -103,9 +113,14 @@ function buildIncidentUpdateEmbed(incident: Incident, update: IncidentUpdate): E
 }
 
 async function fetchAo3ComponentStatus(): Promise<string | null> {
-  const data = await fetchJson<{ components: { name: string; status: string }[] }>(COMPONENTS_API_URL);
+  const data = await fetchJson<{
+    components: { name: string; status: string }[];
+  }>(COMPONENTS_API_URL);
   if (!data) return null;
-  return data.components.find((component) => component.name === AO3_COMPONENT_NAME)?.status ?? null;
+  return (
+    data.components.find((component) => component.name === AO3_COMPONENT_NAME)
+      ?.status ?? null
+  );
 }
 
 // Fallback notice for a status change with no published incident.
@@ -115,7 +130,9 @@ function buildGenericStatusEmbed(status: string): EmbedBuilder {
   const isRecovered = status === "operational";
 
   return ao3Embed(color)
-    .setTitle(isRecovered ? "✅ AO3 is back to normal" : `⚠️ AO3 status: ${label}`)
+    .setTitle(
+      isRecovered ? "✅ AO3 is back to normal" : `⚠️ AO3 status: ${label}`,
+    )
     .setURL("https://www.otwstatus.org/")
     .setDescription(
       (isRecovered
@@ -131,12 +148,18 @@ let lastKnownComponentStatus: string | null = null;
 let hasSeededInitialState = false;
 
 async function pollAndNotify(client: Client): Promise<void> {
-  const [incidents, componentStatus] = await Promise.all([fetchAo3Incidents(), fetchAo3ComponentStatus()]);
+  const [incidents, componentStatus] = await Promise.all([
+    fetchAo3Incidents(),
+    fetchAo3ComponentStatus(),
+  ]);
   if (!incidents || !componentStatus) return;
 
   if (!hasSeededInitialState) {
     for (const incident of incidents) {
-      postedUpdateIds.set(incident.id, new Set(incident.incident_updates.map((update) => update.id)));
+      postedUpdateIds.set(
+        incident.id,
+        new Set(incident.incident_updates.map((update) => update.id)),
+      );
     }
     lastKnownComponentStatus = componentStatus;
     hasSeededInitialState = true;
@@ -157,7 +180,8 @@ async function pollAndNotify(client: Client): Promise<void> {
   }
 
   // Status changed but no incident update covers it — use the fallback.
-  const statusChangedWithoutIncident = componentStatus !== lastKnownComponentStatus && newUpdates.length === 0;
+  const statusChangedWithoutIncident =
+    componentStatus !== lastKnownComponentStatus && newUpdates.length === 0;
   const genericStatus = componentStatus;
   lastKnownComponentStatus = componentStatus;
 
@@ -166,13 +190,19 @@ async function pollAndNotify(client: Client): Promise<void> {
   const targets = await getGuildsWithOutageAlertsEnabled();
   if (targets.length === 0) return;
 
-  const embedsToSend: EmbedBuilder[] = newUpdates.map(({ incident, update }) => {
-    console.log(`AO3 incident update: "${incident.name}" -> ${update.status}`);
-    return buildIncidentUpdateEmbed(incident, update);
-  });
+  const embedsToSend: EmbedBuilder[] = newUpdates.map(
+    ({ incident, update }) => {
+      console.log(
+        `AO3 incident update: "${incident.name}" -> ${update.status}`,
+      );
+      return buildIncidentUpdateEmbed(incident, update);
+    },
+  );
 
   if (statusChangedWithoutIncident) {
-    console.log(`AO3 status changed with no incident published: -> ${genericStatus}`);
+    console.log(
+      `AO3 status changed with no incident published: -> ${genericStatus}`,
+    );
     embedsToSend.push(buildGenericStatusEmbed(genericStatus));
   }
 
@@ -186,15 +216,22 @@ async function pollAndNotify(client: Client): Promise<void> {
       if (!channel || !channel.isTextBased()) continue;
 
       await channel.send({ embeds: [embed] }).catch((error) => {
-        console.error(`Failed to send outage alert to guild ${guildId} channel ${channelId}`, error);
+        console.error(
+          `Failed to send outage alert to guild ${guildId} channel ${channelId}`,
+          error,
+        );
       });
     }
   }
 }
 
 export function startOutageMonitor(client: Client): void {
-  pollAndNotify(client).catch((error) => console.error("Initial outage status poll failed", error));
+  pollAndNotify(client).catch((error) =>
+    console.error("Initial outage status poll failed", error),
+  );
   setInterval(() => {
-    pollAndNotify(client).catch((error) => console.error("Outage status poll failed", error));
+    pollAndNotify(client).catch((error) =>
+      console.error("Outage status poll failed", error),
+    );
   }, POLL_INTERVAL_MS);
 }

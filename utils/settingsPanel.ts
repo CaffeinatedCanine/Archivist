@@ -80,7 +80,9 @@ const LIST_RESET_INPUT_ID = "listReset";
 const LIST_RESET_OPTION_VALUE = "enabled";
 
 // Default-tab radio options per -inactivity category.
-const DEFAULT_TAB_OPTIONS: Partial<Record<EmbedFieldCategory, { value: string; label: string }[]>> = {
+const DEFAULT_TAB_OPTIONS: Partial<
+  Record<EmbedFieldCategory, { value: string; label: string }[]>
+> = {
   "work-inactivity": [
     { value: "stats", label: "Stats" },
     { value: "tags", label: "Tags" },
@@ -108,11 +110,21 @@ const DELETE_ORIGINAL_MESSAGE_WARNING =
   "message is deleted too, and this can't be undone.";
 
 function groupAt(index: number) {
-  return EMBED_FIELD_GROUPS[Math.min(Math.max(index, 0), EMBED_FIELD_GROUPS.length - 1)];
+  return EMBED_FIELD_GROUPS[
+    Math.min(Math.max(index, 0), EMBED_FIELD_GROUPS.length - 1)
+  ];
 }
 
-function buildCheckboxOption(f: { key: string; label: string; description?: string; enabled: boolean }) {
-  const option = new CheckboxGroupOptionBuilder().setLabel(f.label).setValue(f.key).setDefault(f.enabled);
+function buildCheckboxOption(f: {
+  key: string;
+  label: string;
+  description?: string;
+  enabled: boolean;
+}) {
+  const option = new CheckboxGroupOptionBuilder()
+    .setLabel(f.label)
+    .setValue(f.key)
+    .setDefault(f.enabled);
   if (f.description) option.setDescription(f.description);
   return option;
 }
@@ -138,7 +150,9 @@ export async function buildGroupEmbed(
 
   const embed = ao3Embed()
     .setTitle(group.title)
-    .setFooter({ text: `Page ${groupIndex + 1} of ${EMBED_FIELD_GROUPS.length}` });
+    .setFooter({
+      text: `Page ${groupIndex + 1} of ${EMBED_FIELD_GROUPS.length}`,
+    });
 
   for (const categoryKey of group.categories) {
     const meta = EMBED_FIELD_CATEGORIES[categoryKey];
@@ -158,11 +172,14 @@ export async function buildGroupEmbed(
 
     const showsLegacySummaryCapNote =
       categoryKey === "work-summary" &&
-      getFieldMaxLength(bundle, "work-summary", "summary") > FIELD_VALUE_HARD_CAP &&
+      getFieldMaxLength(bundle, "work-summary", "summary") >
+        FIELD_VALUE_HARD_CAP &&
       isFieldEnabled(bundle, "general", "legacyWorkEmbed");
 
     const outageChannelId = bundle.guild?.outageAlertChannelId;
-    const outageChannelLine = outageChannelId ? `<#${outageChannelId}>` : "*not set*";
+    const outageChannelLine = outageChannelId
+      ? `<#${outageChannelId}>`
+      : "*not set*";
 
     const defaultTabOptions = DEFAULT_TAB_OPTIONS[categoryKey];
     const currentDefaultTab =
@@ -173,16 +190,26 @@ export async function buildGroupEmbed(
           : categoryKey === "series-inactivity"
             ? getSeriesDefaultTab(bundle)
             : null;
-    const defaultTabDisplayLabel = defaultTabOptions?.find((opt) => opt.value === currentDefaultTab)?.label;
+    const defaultTabDisplayLabel = defaultTabOptions?.find(
+      (opt) => opt.value === currentDefaultTab,
+    )?.label;
 
     // Extra info lines appended after the field checklist.
     const extraLines: string[] = [];
     if (categoryKey === "general") {
-      extraLines.push(`**Ignore character:** \`${getIgnoreChar(bundle)}\``, `**Outage alert channel:** ${outageChannelLine}`);
+      extraLines.push(
+        `**Ignore character:** \`${getIgnoreChar(bundle)}\``,
+        `**Outage alert channel:** ${outageChannelLine}`,
+      );
     }
-    if (defaultTabDisplayLabel) extraLines.push(`**Default tab after inactivity:** ${defaultTabDisplayLabel}`);
+    if (defaultTabDisplayLabel)
+      extraLines.push(
+        `**Default tab after inactivity:** ${defaultTabDisplayLabel}`,
+      );
     if (categoryKey === "series-inactivity") {
-      extraLines.push(`${getListResetToFirstPage(bundle) ? "✅" : "❌"} /list: reset to page 1 after inactivity`);
+      extraLines.push(
+        `${getListResetToFirstPage(bundle) ? "✅" : "❌"} /list: reset to page 1 after inactivity`,
+      );
     }
     if (showsLegacySummaryCapNote) {
       extraLines.push(
@@ -191,11 +218,12 @@ export async function buildGroupEmbed(
     }
 
     // Avoid a blank leading line when fieldLines is empty.
-    const lines = fieldLines && extraLines.length > 0
-      ? `${fieldLines}\n\n${extraLines.join("\n")}`
-      : extraLines.length > 0
-        ? extraLines.join("\n")
-        : fieldLines;
+    const lines =
+      fieldLines && extraLines.length > 0
+        ? `${fieldLines}\n\n${extraLines.join("\n")}`
+        : extraLines.length > 0
+          ? extraLines.join("\n")
+          : fieldLines;
 
     embed.addFields({
       name: meta.title,
@@ -210,19 +238,20 @@ export async function buildGroupEmbed(
 export function buildGroupComponents(groupIndex: number) {
   const group = groupAt(groupIndex);
 
-  const selectRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId(SELECT_PREFIX)
-      .setPlaceholder("Jump to a category…")
-      .addOptions(
-        EMBED_FIELD_GROUPS.map((g, i) =>
-          new StringSelectMenuOptionBuilder()
-            .setLabel(g.title)
-            .setValue(String(i))
-            .setDefault(i === groupIndex),
+  const selectRow =
+    new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId(SELECT_PREFIX)
+        .setPlaceholder("Jump to a category…")
+        .addOptions(
+          EMBED_FIELD_GROUPS.map((g, i) =>
+            new StringSelectMenuOptionBuilder()
+              .setLabel(g.title)
+              .setValue(String(i))
+              .setDefault(i === groupIndex),
+          ),
         ),
-      ),
-  );
+    );
 
   const navRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
@@ -244,7 +273,9 @@ export function buildGroupComponents(groupIndex: number) {
       .setStyle(ButtonStyle.Primary),
   );
 
-  const configureRow = new ActionRowBuilder<ButtonBuilder>().addComponents(configureButtons);
+  const configureRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    configureButtons,
+  );
 
   const resetRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
@@ -333,18 +364,39 @@ async function buildFieldsModal(
 
             const [label, description] =
               categoryKey === "ratings"
-                ? ["Allowed ratings", "Uncheck a rating to block links to works with it."]
+                ? [
+                    "Allowed ratings",
+                    "Uncheck a rating to block links to works with it.",
+                  ]
                 : categoryKey === "general"
-                  ? ["Preferences", "Toggle general bot behavior for this server."]
+                  ? [
+                      "Preferences",
+                      "Toggle general bot behavior for this server.",
+                    ]
                   : categoryKey === "gallery"
-                    ? ["Gallery settings", "Toggle gallery behavior for this server."]
+                    ? [
+                        "Gallery settings",
+                        "Toggle gallery behavior for this server.",
+                      ]
                     : categoryKey === "chapter-thumbnail"
-                      ? ["Thumbnail settings", "Toggle chapter thumbnail behavior for this server."]
+                      ? [
+                          "Thumbnail settings",
+                          "Toggle chapter thumbnail behavior for this server.",
+                        ]
                       : categoryKey.endsWith("-inactivity")
-                        ? ["Inactivity settings", "Toggle inactivity-reset behavior for this embed."]
-                        : ["Visible fields", "Uncheck a field to hide it from this embed."];
+                        ? [
+                            "Inactivity settings",
+                            "Toggle inactivity-reset behavior for this embed.",
+                          ]
+                        : [
+                            "Visible fields",
+                            "Uncheck a field to hide it from this embed.",
+                          ];
 
-            return new LabelBuilder().setLabel(label).setDescription(description).setCheckboxGroupComponent(checkboxGroup);
+            return new LabelBuilder()
+              .setLabel(label)
+              .setDescription(description)
+              .setCheckboxGroupComponent(checkboxGroup);
           })(),
         ]
       : [];
@@ -355,7 +407,9 @@ async function buildFieldsModal(
       const cap = getFieldMaxLengthCap(categoryKey, f.key);
       return new LabelBuilder()
         .setLabel(`${f.label} — max length (1–${cap})`)
-        .setDescription("Characters over this limit are cut off with an ellipsis.")
+        .setDescription(
+          "Characters over this limit are cut off with an ellipsis.",
+        )
         .setTextInputComponent(
           new TextInputBuilder()
             .setCustomId(`${LENGTH_PREFIX}:${f.key}`)
@@ -373,7 +427,9 @@ async function buildFieldsModal(
       ? [
           new LabelBuilder()
             .setLabel("Ignore character")
-            .setDescription('Prefix a link with this to stop it from being embedded, e.g. "%https://...".')
+            .setDescription(
+              'Prefix a link with this to stop it from being embedded, e.g. "%https://...".',
+            )
             .setTextInputComponent(
               new TextInputBuilder()
                 .setCustomId(IGNORE_CHAR_INPUT_ID)
@@ -392,15 +448,21 @@ async function buildFieldsModal(
           (() => {
             const select = new ChannelSelectMenuBuilder()
               .setCustomId(OUTAGE_CHANNEL_INPUT_ID)
-              .setChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+              .setChannelTypes(
+                ChannelType.GuildText,
+                ChannelType.GuildAnnouncement,
+              )
               .setRequired(false)
               .setMinValues(0)
               .setMaxValues(1);
-            if (bundle.guild?.outageAlertChannelId) select.setDefaultChannels(bundle.guild.outageAlertChannelId);
+            if (bundle.guild?.outageAlertChannelId)
+              select.setDefaultChannels(bundle.guild.outageAlertChannelId);
 
             return new LabelBuilder()
               .setLabel("Outage alert channel")
-              .setDescription('Where alerts are posted — "Post AO3 outage alerts" above must also be checked.')
+              .setDescription(
+                'Where alerts are posted — "Post AO3 outage alerts" above must also be checked.',
+              )
               .setChannelSelectMenuComponent(select);
           })(),
         ]
@@ -421,7 +483,9 @@ async function buildFieldsModal(
       ? [
           new LabelBuilder()
             .setLabel("Default tab after 5 min inactivity")
-            .setDescription("The original embed resets to this tab once nobody's clicked it for a while.")
+            .setDescription(
+              "The original embed resets to this tab once nobody's clicked it for a while.",
+            )
             .setRadioGroupComponent(
               new RadioGroupBuilder()
                 .setCustomId(DEFAULT_TAB_INPUT_ID)
@@ -444,7 +508,9 @@ async function buildFieldsModal(
       ? [
           new LabelBuilder()
             .setLabel("/list command")
-            .setDescription("Settings for the /list command, which lists a series' works.")
+            .setDescription(
+              "Settings for the /list command, which lists a series' works.",
+            )
             .setCheckboxGroupComponent(
               new CheckboxGroupBuilder()
                 .setCustomId(LIST_RESET_INPUT_ID)
@@ -454,7 +520,9 @@ async function buildFieldsModal(
                 .setOptions([
                   new CheckboxGroupOptionBuilder()
                     .setLabel("Reset to page 1 after inactivity")
-                    .setDescription("The original /list message jumps back to page 1 after 5 minutes with no clicks.")
+                    .setDescription(
+                      "The original /list message jumps back to page 1 after 5 minutes with no clicks.",
+                    )
                     .setValue(LIST_RESET_OPTION_VALUE)
                     .setDefault(getListResetToFirstPage(bundle)),
                 ]),
@@ -500,7 +568,9 @@ async function buildRestrictionsModal(
   const currentTags = getBlockedTags(bundle).join(", ");
   const tagsLabel = new LabelBuilder()
     .setLabel("Blocked Additional Tags (comma-separated)")
-    .setDescription("Any work with a matching tag is blocked from being posted at all.")
+    .setDescription(
+      "Any work with a matching tag is blocked from being posted at all.",
+    )
     .setTextInputComponent(
       new TextInputBuilder()
         .setCustomId(BLOCKED_TAGS_INPUT_ID)
@@ -573,7 +643,8 @@ export async function handleSettingsPanelButtonInteraction(
     await Promise.all(
       group.categories.map(async (categoryKey) => {
         await resetCategoryToDefaults(interaction.guildId!, categoryKey);
-        if (categoryKey === "restrictions") await setBlockedTags(interaction.guildId!, []);
+        if (categoryKey === "restrictions")
+          await setBlockedTags(interaction.guildId!, []);
       }),
     );
 
@@ -597,7 +668,12 @@ export async function handleSettingsPanelButtonInteraction(
     const groupIndex = Number.parseInt(parts[1], 10) || 0;
     if (await rejectUnlessAllowed(interaction)) return true;
 
-    await setSingleFieldEnabled(interaction.guildId!, "general", DELETE_ORIGINAL_MESSAGE_KEY, true);
+    await setSingleFieldEnabled(
+      interaction.guildId!,
+      "general",
+      DELETE_ORIGINAL_MESSAGE_KEY,
+      true,
+    );
 
     await interaction.update({
       embeds: [await buildGroupEmbed(interaction.guildId, groupIndex)],
@@ -629,7 +705,10 @@ async function rejectUnlessAllowed(
   interaction: ButtonInteraction | ModalSubmitInteraction,
 ): Promise<boolean> {
   if (!interaction.guildId) {
-    await interaction.reply({ content: "This command can only be used in a server.", flags: MessageFlags.Ephemeral });
+    await interaction.reply({
+      content: "This command can only be used in a server.",
+      flags: MessageFlags.Ephemeral,
+    });
     return true;
   }
 
@@ -637,7 +716,8 @@ async function rejectUnlessAllowed(
   // guild roles could change between opening it and submitting the modal.
   if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
     await interaction.reply({
-      content: "You need the **Manage Server** permission to change bot settings.",
+      content:
+        "You need the **Manage Server** permission to change bot settings.",
       flags: MessageFlags.Ephemeral,
     });
     return true;
@@ -646,7 +726,10 @@ async function rejectUnlessAllowed(
   return false;
 }
 
-async function refreshPanel(interaction: ModalSubmitInteraction, groupIndex: number): Promise<void> {
+async function refreshPanel(
+  interaction: ModalSubmitInteraction,
+  groupIndex: number,
+): Promise<void> {
   const payload = {
     embeds: [await buildGroupEmbed(interaction.guildId, groupIndex)],
     components: buildGroupComponents(groupIndex),
@@ -670,8 +753,14 @@ export async function handleRestrictionsModalSubmit(
   const groupIndex = Number.parseInt(parts[1], 10) || 0;
   if (await rejectUnlessAllowed(interaction)) return true;
 
-  const enabledWarningKeys = [...interaction.fields.getCheckboxGroup(CHECKBOX_GROUP_ID)];
-  await setCategoryFields(interaction.guildId!, "restrictions", enabledWarningKeys);
+  const enabledWarningKeys = [
+    ...interaction.fields.getCheckboxGroup(CHECKBOX_GROUP_ID),
+  ];
+  await setCategoryFields(
+    interaction.guildId!,
+    "restrictions",
+    enabledWarningKeys,
+  );
 
   const raw = interaction.fields.getTextInputValue(BLOCKED_TAGS_INPUT_ID);
   const tags = raw
@@ -697,11 +786,18 @@ export async function handleSettingsPanelModalSubmit(
 
   const wasDeleteOriginalMessageEnabled =
     categoryKey === "general" &&
-    isFieldEnabled(await getGuildSettingsBundle(interaction.guildId), "general", DELETE_ORIGINAL_MESSAGE_KEY);
+    isFieldEnabled(
+      await getGuildSettingsBundle(interaction.guildId),
+      "general",
+      DELETE_ORIGINAL_MESSAGE_KEY,
+    );
 
   // No checkbox group for categories with no FieldDefs.
-  const hasCheckboxGroup = EMBED_FIELD_CATEGORIES[categoryKey].fields.length > 0;
-  const submittedKeys = hasCheckboxGroup ? [...interaction.fields.getCheckboxGroup(CHECKBOX_GROUP_ID)] : [];
+  const hasCheckboxGroup =
+    EMBED_FIELD_CATEGORIES[categoryKey].fields.length > 0;
+  const submittedKeys = hasCheckboxGroup
+    ? [...interaction.fields.getCheckboxGroup(CHECKBOX_GROUP_ID)]
+    : [];
 
   // Turning this on is destructive and irreversible (deletes the user's
   // whole message, not just the link) in a way that isn't obvious from the
@@ -722,32 +818,53 @@ export async function handleSettingsPanelModalSubmit(
     const lengths: Record<string, number> = {};
     for (const field of EMBED_FIELD_CATEGORIES[categoryKey].fields) {
       if (!field.maxLength) continue;
-      const raw = interaction.fields.getTextInputValue(`${LENGTH_PREFIX}:${field.key}`);
+      const raw = interaction.fields.getTextInputValue(
+        `${LENGTH_PREFIX}:${field.key}`,
+      );
       lengths[field.key] = Number.parseInt(raw, 10);
     }
     await setFieldMaxLengths(interaction.guildId!, categoryKey, lengths);
   }
 
   if (categoryKey === "general") {
-    await setIgnoreChar(interaction.guildId!, interaction.fields.getTextInputValue(IGNORE_CHAR_INPUT_ID));
+    await setIgnoreChar(
+      interaction.guildId!,
+      interaction.fields.getTextInputValue(IGNORE_CHAR_INPUT_ID),
+    );
 
-    const selectedChannel = interaction.fields.getSelectedChannels(OUTAGE_CHANNEL_INPUT_ID, false)?.first();
-    await updateGuildSettings(interaction.guildId!, { outageAlertChannelId: selectedChannel?.id ?? null });
+    const selectedChannel = interaction.fields
+      .getSelectedChannels(OUTAGE_CHANNEL_INPUT_ID, false)
+      ?.first();
+    await updateGuildSettings(interaction.guildId!, {
+      outageAlertChannelId: selectedChannel?.id ?? null,
+    });
   }
 
   if (DEFAULT_TAB_OPTIONS[categoryKey]) {
     const selectedTab = interaction.fields.getRadioGroup(DEFAULT_TAB_INPUT_ID);
-    if (categoryKey === "work-inactivity") await setWorkDefaultTab(interaction.guildId!, selectedTab as WorkDefaultTab);
+    if (categoryKey === "work-inactivity")
+      await setWorkDefaultTab(
+        interaction.guildId!,
+        selectedTab as WorkDefaultTab,
+      );
     if (categoryKey === "chapter-inactivity") {
-      await setChapterDefaultTab(interaction.guildId!, selectedTab as ChapterDefaultTab);
+      await setChapterDefaultTab(
+        interaction.guildId!,
+        selectedTab as ChapterDefaultTab,
+      );
     }
     if (categoryKey === "series-inactivity") {
-      await setSeriesDefaultTab(interaction.guildId!, selectedTab as SeriesDefaultTab);
+      await setSeriesDefaultTab(
+        interaction.guildId!,
+        selectedTab as SeriesDefaultTab,
+      );
     }
   }
 
   if (categoryKey === "series-inactivity") {
-    const listResetEnabled = interaction.fields.getCheckboxGroup(LIST_RESET_INPUT_ID).includes(LIST_RESET_OPTION_VALUE);
+    const listResetEnabled = interaction.fields
+      .getCheckboxGroup(LIST_RESET_INPUT_ID)
+      .includes(LIST_RESET_OPTION_VALUE);
     await setListResetToFirstPage(interaction.guildId!, listResetEnabled);
   }
 

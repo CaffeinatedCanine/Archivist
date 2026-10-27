@@ -10,7 +10,10 @@ function parseDevUserIds(): Set<string> {
 
   try {
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || !parsed.every((id) => typeof id === "string")) {
+    if (
+      !Array.isArray(parsed) ||
+      !parsed.every((id) => typeof id === "string")
+    ) {
       throw new Error("DEV_USER_IDS must be a JSON array of strings");
     }
     return new Set(parsed);

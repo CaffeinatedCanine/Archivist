@@ -17,7 +17,10 @@ export function truncateText(text: string, max: number): string {
 
   // Strip any trailing punctuation/ellipsis from the original text so it
   // doesn't stack with the appended ellipsis (e.g. ".…" reading as 4 dots).
-  const trimmed = text.slice(0, cut).trimEnd().replace(/[.…]+$/, "");
+  const trimmed = text
+    .slice(0, cut)
+    .trimEnd()
+    .replace(/[.…]+$/, "");
 
   return trimmed + ellipsis;
 }

@@ -20,9 +20,14 @@ client.once("ready", async () => {
         continue;
       }
       await guild.commands.set([]);
-      console.log(`${guild.name} (${guild.id}): cleared ${existing.size} guild-specific command(s).`);
+      console.log(
+        `${guild.name} (${guild.id}): cleared ${existing.size} guild-specific command(s).`,
+      );
     } catch (error) {
-      console.error(`${guild.name} (${guild.id}): failed to clear commands.`, error);
+      console.error(
+        `${guild.name} (${guild.id}): failed to clear commands.`,
+        error,
+      );
     }
   }
 

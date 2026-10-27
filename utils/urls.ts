@@ -1,4 +1,8 @@
-import { resolveRedirectRule, updateRedirectRuleThreadId, type RedirectType } from "./redirects.ts";
+import {
+  resolveRedirectRule,
+  updateRedirectRuleThreadId,
+  type RedirectType,
+} from "./redirects.ts";
 
 export function extractPathnameGroup(url: string, regex: RegExp): string {
   try {
@@ -57,13 +61,19 @@ export async function sendRedirectableEmbed(
   meta: { rating?: string; fandoms?: string[]; type: RedirectType },
   waitingMsg: any,
 ): Promise<RedirectSendResult> {
-  const rule = message.guildId ? await resolveRedirectRule(message.guildId, meta) : null;
+  const rule = message.guildId
+    ? await resolveRedirectRule(message.guildId, meta)
+    : null;
 
   if (rule && rule.destinationId !== message.channelId) {
-    const dest = await message.guild?.channels.fetch(rule.destinationId).catch(() => null);
+    const dest = await message.guild?.channels
+      .fetch(rule.destinationId)
+      .catch(() => null);
 
     if (!dest) {
-      console.warn(`Redirect target ${rule.destinationId} unavailable; falling back.`);
+      console.warn(
+        `Redirect target ${rule.destinationId} unavailable; falling back.`,
+      );
       const edited = await waitingMsg.edit({ content: "", ...payload });
       return { channelId: message.channelId, message: edited };
     }
@@ -72,28 +82,46 @@ export async function sendRedirectableEmbed(
       case "channel":
       case "thread": {
         const sent = await dest.send(payload);
-        await showTemporaryNotice(waitingMsg, `➡️ Sent to <#${rule.destinationId}>`, REDIRECT_NOTICE_LIFETIME_MS);
+        await showTemporaryNotice(
+          waitingMsg,
+          `➡️ Sent to <#${rule.destinationId}>`,
+          REDIRECT_NOTICE_LIFETIME_MS,
+        );
         return { channelId: rule.destinationId, message: sent };
       }
 
       case "forum": {
         // Reuse the thread from the first time this rule fired, if it still exists.
         if (rule.forumThreadId) {
-          const existing = await dest.threads.fetch(rule.forumThreadId).catch(() => null);
+          const existing = await dest.threads
+            .fetch(rule.forumThreadId)
+            .catch(() => null);
           if (existing) {
-            if (existing.archived) await existing.setArchived(false).catch(() => {});
+            if (existing.archived)
+              await existing.setArchived(false).catch(() => {});
             const sent = await existing.send(payload);
-            await showTemporaryNotice(waitingMsg, `➡️ Sent to <#${rule.forumThreadId}>`, REDIRECT_NOTICE_LIFETIME_MS);
+            await showTemporaryNotice(
+              waitingMsg,
+              `➡️ Sent to <#${rule.forumThreadId}>`,
+              REDIRECT_NOTICE_LIFETIME_MS,
+            );
             return { channelId: rule.forumThreadId, message: sent };
           }
         }
 
         // No saved thread (or it was deleted) — create a new one and remember it.
-        const thread = await dest.threads.create({ name: "AO3 Redirect", message: payload });
+        const thread = await dest.threads.create({
+          name: "AO3 Redirect",
+          message: payload,
+        });
         if (message.guildId) {
           await updateRedirectRuleThreadId(message.guildId, rule.id, thread.id);
         }
-        await showTemporaryNotice(waitingMsg, `➡️ Sent to new thread <#${thread.id}>`, REDIRECT_NOTICE_LIFETIME_MS);
+        await showTemporaryNotice(
+          waitingMsg,
+          `➡️ Sent to new thread <#${thread.id}>`,
+          REDIRECT_NOTICE_LIFETIME_MS,
+        );
         const starterMessage = await thread.fetchStarterMessage();
         return { channelId: thread.id, message: starterMessage };
       }
