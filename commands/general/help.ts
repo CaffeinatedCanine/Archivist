@@ -6,6 +6,7 @@ import {
   ChatInputCommandInteraction,
   EmbedBuilder,
   SlashCommandBuilder,
+  MessageFlags,
 } from "discord.js";
 
 import type { ClientWithCommands } from "../../bot.ts";
@@ -203,7 +204,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   await interaction.reply({
     embeds: [embed],
     components: buildHelpComponents(interaction.user.id, page, pageCount),
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   });
 };
 
@@ -222,7 +223,7 @@ export const handleHelpButtonInteraction = async (
     await interaction.reply({
       content:
         "This help panel belongs to someone else. Run `/help` for your own copy.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return true;
   }

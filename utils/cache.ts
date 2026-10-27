@@ -1,10 +1,16 @@
-import { getSeries, getUser, getWork, getWorkContent, getWorkWithChapters, setFetcher } from "@fujocoded/ao3.js";
+import { getSeries, getUser, getWork, getWorkContent, setFetcher } from "@fujocoded/ao3.js";
+import { ao3Limiter } from "./ao3Limiter.ts";
 import { recordAo3Request, recordCacheHit, recordError } from "./cacheStats.ts";
 
-import { ao3Limiter } from "./ao3Limiter.ts";
-
-const HOUR_MS = 60 * 60 * 1000;
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
 const THREE_HOURS_MS = 3 * HOUR_MS;
+
+// Default cap per cache. When full, the least recently used entry is dropped.
+const DEFAULT_MAX_ENTRIES = 2000;
+
+// How often every cache drops expired entries that nobody asked for again.
+const SWEEP_INTERVAL_MS = 10 * MINUTE_MS;
 
 type CacheKey = string | number;
 
@@ -17,11 +23,20 @@ type WorkData = Awaited<ReturnType<typeof getWork>>;
 type SeriesData = Awaited<ReturnType<typeof getSeries>>;
 type UserData = Awaited<ReturnType<typeof getUser>>;
 type WorkContentData = Awaited<ReturnType<typeof getWorkContent>>;
-type WorkWithChaptersData = Awaited<ReturnType<typeof getWorkWithChapters>>;
 
 // Cooldown before a failed link is retried, so repeated posts of a broken
 // link don't each trigger a fresh AO3 request.
 const FAILURE_TTL_MS = 15 * 1000;
+
+// Thrown instead of contacting AO3 while it's rate-limiting us or our own
+// queue is too long to answer in reasonable time. Not the item's fault, so
+// it doesn't start the per-item failure cooldown below.
+export class Ao3BusyError extends Error {
+  constructor() {
+    super("AO3 is busy; not sending more requests for now.");
+    this.name = "Ao3BusyError";
+  }
+}
 
 // Thrown when getOrSet is still in the cooldown above.
 export class RecentFailureError extends Error {
@@ -31,6 +46,10 @@ export class RecentFailureError extends Error {
   }
 }
 
+const allCaches = new Set<Cache<unknown>>();
+
+// Map keeps insertion order, so the first key is always the least recently
+// used one: get() re-inserts a hit at the end, and set() evicts from the front.
 export class Cache<T> {
   private readonly store = new Map<CacheKey, CacheEntry<T>>();
   private readonly inFlight = new Map<CacheKey, Promise<T>>();
@@ -38,13 +57,24 @@ export class Cache<T> {
 
   // statsName feeds /cachestats (utils/cacheStats.ts). Left unset for
   // internal caches like the raw-HTML fetch cache.
-  constructor(private readonly ttlMs: number = HOUR_MS, private readonly statsName?: string) {}
+  constructor(
+    private readonly ttlMs: number = HOUR_MS,
+    private readonly statsName?: string,
+    private readonly maxEntries: number = DEFAULT_MAX_ENTRIES,
+  ) {
+    allCaches.add(this as Cache<unknown>);
+  }
 
   set(key: CacheKey, value: T): void {
+    this.store.delete(key);
     this.store.set(key, {
       data: value,
       expiresAt: Date.now() + this.ttlMs,
     });
+    while (this.store.size > this.maxEntries) {
+      const oldest = this.store.keys().next().value as CacheKey;
+      this.store.delete(oldest);
+    }
   }
 
   get(key: CacheKey): T | null {
@@ -56,7 +86,21 @@ export class Cache<T> {
       return null;
     }
 
+    // Moves the entry to the back of the eviction line. expiresAt is left
+    // alone so popular works still get fresh stats from AO3 after the TTL.
+    this.store.delete(key);
+    this.store.set(key, entry);
     return entry.data;
+  }
+
+  // Drops expired entries and finished failure cooldowns.
+  sweep(now: number = Date.now()): void {
+    for (const [key, entry] of this.store) {
+      if (now > entry.expiresAt) this.store.delete(key);
+    }
+    for (const [key, until] of this.failures) {
+      if (now >= until) this.failures.delete(key);
+    }
   }
 
   async getOrSet(key: CacheKey, loader: () => Promise<T>): Promise<T> {
@@ -83,8 +127,10 @@ export class Cache<T> {
         this.failures.delete(key);
         return value;
       } catch (error) {
-        this.failures.set(key, Date.now() + FAILURE_TTL_MS);
-        if (this.statsName) recordError(this.statsName);
+        if (!(error instanceof Ao3BusyError)) {
+          this.failures.set(key, Date.now() + FAILURE_TTL_MS);
+          if (this.statsName) recordError(this.statsName);
+        }
         throw error;
       } finally {
         this.inFlight.delete(key);
@@ -102,12 +148,16 @@ export class Cache<T> {
   }
 }
 
+// unref() so the timer never keeps the process alive on shutdown.
+setInterval(() => {
+  for (const cache of allCaches) cache.sweep();
+}, SWEEP_INTERVAL_MS).unref();
+
 export const workCache = new Cache<WorkData>(HOUR_MS, "work");
 export const seriesCache = new Cache<SeriesData>(HOUR_MS, "series");
 export const fullSeriesCache = new Cache<SeriesData>(HOUR_MS, "series");
 export const workChapterCache = new Cache<WorkData>(HOUR_MS, "chapter");
 export const workContentCache = new Cache<WorkContentData>(HOUR_MS, "content");
-export const workWithChaptersCache = new Cache<WorkWithChaptersData>(HOUR_MS);
 export const userCache = new Cache<UserData>(THREE_HOURS_MS, "user");
 
 // Retries a failed request with growing backoff (1.5s, then 3s).
@@ -117,6 +167,8 @@ async function withRetry<T>(loader: () => Promise<T>, attempts = 3, baseDelayMs 
       return await loader();
     } catch (error) {
       if (attempt >= attempts) throw error;
+      // Retrying right away would only make a rate limit worse.
+      if (error instanceof Ao3BusyError) throw error;
       await new Promise((resolve) => setTimeout(resolve, baseDelayMs * attempt));
     }
   }
@@ -141,17 +193,18 @@ export async function cachedGetSeries(seriesId: CacheKey) {
 }
 
 // Every work in a series, fetched page by page (AO3 shows 20 per page).
-// Each page request takes its own ao3Limiter slot so requests stay spaced
-// out. Callers must NOT wrap this in ao3Limiter.schedule themselves: with
-// maxConcurrent: 1, the nested jobs would wait on the outer one forever.
+// Each page request takes its own ao3Limiter slot inside fetchAo3Text, so
+// requests stay spaced out. Nobody may wrap AO3 calls in
+// ao3Limiter.schedule themselves: with maxConcurrent: 1, the nested fetch
+// would wait on the outer job forever.
 export async function cachedGetFullSeries(seriesId: CacheKey) {
   return fullSeriesCache.getOrSet(seriesId, async () => {
-    const first = await ao3Limiter.schedule(() => getSeries({ seriesId, page: 1 }));
+    const first = await getSeries({ seriesId, page: 1 });
     if (!first.name) throw new Error("Series name is empty — AO3 likely returned an incomplete page");
 
     const works = [...first.works];
     for (let page = 2; page <= first.pages.total; page++) {
-      const next = await ao3Limiter.schedule(() => getSeries({ seriesId, page }));
+      const next = await getSeries({ seriesId, page });
       if (!next.works.length) break; // safety net against a bad/empty page
       works.push(...next.works);
     }
@@ -168,12 +221,6 @@ function chapterCacheKey(workId: CacheKey, chapterId?: number | string | null): 
   return `${workId}:${chapterId ?? "default"}`;
 }
 
-export async function cachedGetWorkWithChapters(workId: CacheKey) {
-  return workWithChaptersCache.getOrSet(workId, () =>
-    getWorkWithChapters({ workId }),
-  );
-}
-
 export async function cachedGetWorkChapter(workId: CacheKey, chapterId?: number) {
   const key = chapterCacheKey(workId, chapterId);
   return workChapterCache.getOrSet(key, () => getWork({ workId, chapterId }));
@@ -185,8 +232,10 @@ export async function cachedGetWorkContent(workId: CacheKey, chapterId?: number)
 }
 
 // Shared raw-HTML cache for every ao3.js fetch, wired in via setFetcher
-// below so images.ts's gallery scraping doesn't re-fetch the same page.
-const rawHtmlCache = new Cache<string>(HOUR_MS);
+// below, so e.g. getWork and getWorkContent for the same page share one
+// download. Kept short and small: pages can be large, and the parsed caches
+// above already hold everything the bot needs for longer.
+const rawHtmlCache = new Cache<string>(10 * MINUTE_MS, undefined, 200);
 
 // Browser-like headers reduce Cloudflare bot-detection challenges.
 const BROWSER_HEADERS: Record<string, string> = {
@@ -200,12 +249,39 @@ const BROWSER_HEADERS: Record<string, string> = {
 // doesn't block ao3Limiter's whole queue.
 const FETCH_TIMEOUT_MS = 30 * 1000;
 
-export async function cachedFetchText(url: string, cookie: string = ""): Promise<string> {
-  const key = `${url}::${cookie}`;
-  return rawHtmlCache.getOrSet(key, () =>
-    // Retry happens here, not around a caller, so it's a real second
-    // network attempt rather than hitting this cache's own cooldown.
-    withRetry(async () => {
+// Requests already waiting beyond this many get turned away with
+// Ao3BusyError. At one request per 2.5s that's roughly a 40s wait.
+const MAX_QUEUED_REQUESTS = 15;
+
+// When AO3 answers 429 without a usable Retry-After, pause this long.
+const DEFAULT_RATE_LIMIT_PAUSE_MS = 60 * 1000;
+const MAX_RATE_LIMIT_PAUSE_MS = 10 * MINUTE_MS;
+
+// While set, every request on this shard is refused without reaching AO3.
+let ao3PausedUntil = 0;
+
+function pauseFromRetryAfter(header: string | null): number {
+  if (header) {
+    const seconds = Number(header);
+    const ms = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(header) - Date.now();
+    if (Number.isFinite(ms) && ms > 0) return Math.min(ms, MAX_RATE_LIMIT_PAUSE_MS);
+  }
+  return DEFAULT_RATE_LIMIT_PAUSE_MS;
+}
+
+// The only place the bot talks to AO3. Each attempt waits its turn in
+// ao3Limiter, so cache hits anywhere above never queue, and retry backoff
+// happens outside the limiter instead of holding its slot.
+export async function fetchAo3Text(url: string, cookie: string = ""): Promise<string> {
+  return withRetry(async () => {
+    // RECEIVED counts jobs Bottleneck hasn't moved into its queue yet.
+    const { RECEIVED, QUEUED } = ao3Limiter.counts();
+    if (Date.now() < ao3PausedUntil || RECEIVED + QUEUED >= MAX_QUEUED_REQUESTS) {
+      throw new Ao3BusyError();
+    }
+    return ao3Limiter.schedule(async () => {
+      // A pause can start while this request was waiting in the queue.
+      if (Date.now() < ao3PausedUntil) throw new Ao3BusyError();
       const headers = cookie ? { ...BROWSER_HEADERS, Cookie: cookie } : BROWSER_HEADERS;
       let response: Response;
       try {
@@ -216,12 +292,25 @@ export async function cachedFetchText(url: string, cookie: string = ""): Promise
         }
         throw error;
       }
+      if (response.status === 429) {
+        const pauseMs = pauseFromRetryAfter(response.headers.get("Retry-After"));
+        ao3PausedUntil = Date.now() + pauseMs;
+        console.warn(`AO3 rate-limited us (429); pausing requests for ${Math.round(pauseMs / 1000)}s`);
+        throw new Ao3BusyError();
+      }
       if (!response.ok) {
         throw new Error(`AO3 returned HTTP ${response.status} for ${url}`);
       }
       return response.text();
-    }),
-  );
+    });
+  });
+}
+
+export async function cachedFetchText(url: string, cookie: string = ""): Promise<string> {
+  const key = `${url}::${cookie}`;
+  // Retry happens inside fetchAo3Text, not around a caller, so it's a real
+  // second network attempt rather than hitting this cache's own cooldown.
+  return rawHtmlCache.getOrSet(key, () => fetchAo3Text(url, cookie));
 }
 
 setFetcher(async (input, init) => {

@@ -1,6 +1,7 @@
 import {
   ChatInputCommandInteraction,
   SlashCommandBuilder,
+  MessageFlags,
 } from "discord.js";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -101,7 +102,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 
   // No command name given — reload everything.
   if (!commandName) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const reloaded: string[] = [];
     const failed: { file: string; error: string }[] = [];
@@ -136,7 +137,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   if (!filePath) {
     await interaction.reply({
       content: `No command file found for \`${commandName}\`.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -150,14 +151,14 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 
     await interaction.reply({
       content: `Command \`${reloadedName}\` was reloaded!`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
     console.error(error);
     const message = error instanceof Error ? error.message : String(error);
     await interaction.reply({
       content: `⚠️ There was an error while reloading command \`${commandName}\`:\n\`${message}\``,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 };

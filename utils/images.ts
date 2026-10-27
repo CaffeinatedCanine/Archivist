@@ -10,7 +10,7 @@ import {
 import { getWorkUrl } from "@fujocoded/ao3.js/urls";
 
 import { ao3Embed } from "./baseEmbed.ts";
-import { Cache, cachedFetchText, cachedGetWork } from "./cache.ts";
+import { Cache, cachedGetWork, fetchAo3Text } from "./cache.ts";
 import { embedColor } from "./ratings.ts";
 import { getGuildSettingsBundle, isFieldEnabled, shouldShowNsfwWarning } from "./embedFields.ts";
 import { scheduleInactivityReset } from "./inactivityReset.ts";
@@ -80,7 +80,9 @@ export function extractImagesFromHtml(html: string): string[] {
 async function fetchWorkImages(workId: CacheKey): Promise<string[]> {
   return workImagesCache.getOrSet(workId, async () => {
     const url = `${getWorkUrl({ workId })}?view_full_work=true`;
-    const html = await cachedFetchText(url, VIEW_ADULT_COOKIE);
+    // Not kept in the raw-HTML cache: a full work can be several MB, and
+    // only the image URLs pulled out here are ever needed again.
+    const html = await fetchAo3Text(url, VIEW_ADULT_COOKIE);
     return extractImagesFromHtml(html);
   });
 }

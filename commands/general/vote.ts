@@ -38,3 +38,4 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   );
 
   await interaction.reply({ embeds: [voteEmbed], components: [buttons] });
+};
