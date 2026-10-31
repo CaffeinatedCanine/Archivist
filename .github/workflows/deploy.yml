@@ -1,0 +1,64 @@
+name: Build & publish deploy branch
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      # Bundle = compiled code + dependency manifest + a root launcher, because
+      # PebbleHost only lets us pick a start file (index.js) at the repo root.
+      - name: Assemble deploy bundle
+        run: |
+          mkdir out
+          cp -r dist out/dist
+          cp package.json package-lock.json out/
+          echo 'import "./dist/index.js";' > out/index.js
+
+      # Normal (non-force) pushes keep the branch fast-forward-only, so the
+      # panel's git pull keeps working.
+      - name: Publish to deploy branch
+        env:
+          REPO_URL: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --exit-code --heads "$REPO_URL" deploy >/dev/null 2>&1; then
+            git clone --branch deploy "$REPO_URL" publish
+          else
+            git init -b deploy publish
+            git -C publish remote add origin "$REPO_URL"
+          fi
+
+          find publish -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -r out/. publish/
+
+          cd publish
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to deploy"
+          else
+            git commit -m "Build from ${GITHUB_SHA::7}"
+            git push origin deploy
+          fi
