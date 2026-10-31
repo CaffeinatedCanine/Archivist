@@ -44,8 +44,8 @@ async function postToTopgg(stats: Stats): Promise<string> {
 
 async function postToDiscordBotList(stats: Stats): Promise<string> {
   const token = process.env.DBL_TOKEN;
-  const botId = process.env.CLIENT_ID;
-  if (!token || !botId) return "skipped (no DBL_TOKEN/CLIENT_ID)";
+  const botId = process.env.CLIENT_ID_PROD;
+  if (!token || !botId) return "skipped (no DBL_TOKEN/CLIENT_ID_PROD)";
 
   await postBotStats(token, botId, {
     guilds: stats.guilds,
