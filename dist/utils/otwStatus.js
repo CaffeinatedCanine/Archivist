@@ -5,6 +5,7 @@ const INCIDENTS_API_URL = "https://www.otwstatus.org/api/v2/incidents.json";
 const COMPONENTS_API_URL = "https://www.otwstatus.org/api/v2/components.json";
 const AO3_COMPONENT_NAME = "Archive of Our Own";
 const POLL_INTERVAL_MS = 2 * 60 * 1000;
+const DB_TIMEOUT_MS = 15_000;
 const GENERIC_STATUS_LABELS = {
     operational: "Operational",
     degraded_performance: "Degraded Performance",
@@ -97,7 +98,14 @@ function buildGenericStatusEmbed(status) {
 const postedUpdateIds = new Map();
 let lastKnownComponentStatus = null;
 let hasSeededInitialState = false;
-async function pollAndNotify(client) {
+function withTimeout(promise, ms, label) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+export async function pollAndNotify(client) {
     const [incidents, componentStatus] = await Promise.all([
         fetchAo3Incidents(),
         fetchAo3ComponentStatus(),
@@ -114,51 +122,68 @@ async function pollAndNotify(client) {
     }
     const newUpdates = [];
     for (const incident of incidents) {
-        const seen = postedUpdateIds.get(incident.id) ?? new Set();
+        const seen = postedUpdateIds.get(incident.id);
         // Post oldest-to-newest.
         for (const update of [...incident.incident_updates].reverse()) {
-            if (seen.has(update.id))
-                continue;
-            seen.add(update.id);
-            newUpdates.push({ incident, update });
+            if (!seen?.has(update.id))
+                newUpdates.push({ incident, update });
         }
-        postedUpdateIds.set(incident.id, seen);
     }
     // Status changed but no incident update covers it — use the fallback.
     const statusChangedWithoutIncident = componentStatus !== lastKnownComponentStatus && newUpdates.length === 0;
-    const genericStatus = componentStatus;
-    lastKnownComponentStatus = componentStatus;
     if (newUpdates.length === 0 && !statusChangedWithoutIncident)
         return;
-    const targets = await getGuildsWithOutageAlertsEnabled();
-    if (targets.length === 0)
-        return;
-    const embedsToSend = newUpdates.map(({ incident, update }) => {
-        console.log(`AO3 incident update: "${incident.name}" -> ${update.status}`);
-        return buildIncidentUpdateEmbed(incident, update);
-    });
-    if (statusChangedWithoutIncident) {
-        console.log(`AO3 status changed with no incident published: -> ${genericStatus}`);
-        embedsToSend.push(buildGenericStatusEmbed(genericStatus));
-    }
-    for (const embed of embedsToSend) {
-        for (const { guildId, channelId } of targets) {
-            // Skip guilds this shard doesn't own.
-            const guild = client.guilds.cache.get(guildId);
-            if (!guild)
-                continue;
-            const channel = guild.channels.cache.get(channelId);
-            if (!channel || !channel.isTextBased())
-                continue;
-            await channel.send({ embeds: [embed] }).catch((error) => {
-                console.error(`Failed to send outage alert to guild ${guildId} channel ${channelId}`, error);
-            });
+    // A hung or failed lookup throws here, before anything is marked as posted, so the next poll retries.
+    const targets = await withTimeout(getGuildsWithOutageAlertsEnabled(), DB_TIMEOUT_MS, "Outage alert guild lookup");
+    if (targets.length > 0) {
+        const embedsToSend = newUpdates.map(({ incident, update }) => {
+            console.log(`AO3 incident update: "${incident.name}" -> ${update.status}`);
+            return buildIncidentUpdateEmbed(incident, update);
+        });
+        if (statusChangedWithoutIncident) {
+            console.log(`AO3 status changed with no incident published: -> ${componentStatus}`);
+            embedsToSend.push(buildGenericStatusEmbed(componentStatus));
         }
+        for (const embed of embedsToSend) {
+            for (const { guildId, channelId } of targets) {
+                // Skip guilds this shard doesn't own.
+                const guild = client.guilds.cache.get(guildId);
+                if (!guild)
+                    continue;
+                const channel = guild.channels.cache.get(channelId);
+                if (!channel || !channel.isTextBased())
+                    continue;
+                await channel.send({ embeds: [embed] }).catch((error) => {
+                    console.error(`Failed to send outage alert to guild ${guildId} channel ${channelId}`, error);
+                });
+            }
+        }
+    }
+    // Mark as posted only once sending is done.
+    for (const { incident, update } of newUpdates) {
+        const seen = postedUpdateIds.get(incident.id) ?? new Set();
+        seen.add(update.id);
+        postedUpdateIds.set(incident.id, seen);
+    }
+    lastKnownComponentStatus = componentStatus;
+}
+let isPolling = false;
+// Skips a tick while the previous poll is still running, so slow polls can't pile up.
+async function pollSafely(client, errorLabel) {
+    if (isPolling)
+        return;
+    isPolling = true;
+    try {
+        await pollAndNotify(client);
+    }
+    catch (error) {
+        console.error(errorLabel, error);
+    }
+    finally {
+        isPolling = false;
     }
 }
 export function startOutageMonitor(client) {
-    pollAndNotify(client).catch((error) => console.error("Initial outage status poll failed", error));
-    setInterval(() => {
-        pollAndNotify(client).catch((error) => console.error("Outage status poll failed", error));
-    }, POLL_INTERVAL_MS);
+    void pollSafely(client, "Initial outage status poll failed");
+    setInterval(() => void pollSafely(client, "Outage status poll failed"), POLL_INTERVAL_MS);
 }
