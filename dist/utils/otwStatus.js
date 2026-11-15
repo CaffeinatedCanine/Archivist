@@ -6,6 +6,7 @@ const COMPONENTS_API_URL = "https://www.otwstatus.org/api/v2/components.json";
 const AO3_COMPONENT_NAME = "Archive of Our Own";
 const POLL_INTERVAL_MS = 2 * 60 * 1000;
 const DB_TIMEOUT_MS = 15_000;
+const RETRY_DELAY_MS = 10 * 60 * 1000;
 const GENERIC_STATUS_LABELS = {
     operational: "Operational",
     degraded_performance: "Degraded Performance",
@@ -105,6 +106,39 @@ function withTimeout(promise, ms, label) {
     });
     return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
+// Returns false when the guild is on this shard but the alert couldn't be delivered.
+async function sendAlert(client, guildId, channelId, embed) {
+    // Skip guilds this shard doesn't own.
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild)
+        return true;
+    const channel = guild.channels.cache.get(channelId);
+    if (!channel || !channel.isTextBased())
+        return false;
+    try {
+        await channel.send({ embeds: [embed] });
+        return true;
+    }
+    catch (error) {
+        console.error(`Failed to send outage alert to guild ${guildId} channel ${channelId}`, error);
+        return false;
+    }
+}
+// One more attempt, so admins who notice a missed alert have time to fix the channel or its permissions.
+// The channel is looked up again in case they picked a different one.
+async function retryFailedAlerts(client, failed) {
+    try {
+        const targets = await withTimeout(getGuildsWithOutageAlertsEnabled(), DB_TIMEOUT_MS, "Outage alert retry lookup");
+        for (const { guildId, channelId } of targets) {
+            for (const embed of failed.get(guildId) ?? []) {
+                await sendAlert(client, guildId, channelId, embed);
+            }
+        }
+    }
+    catch (error) {
+        console.error("Outage alert retry failed", error);
+    }
+}
 export async function pollAndNotify(client) {
     const [incidents, componentStatus] = await Promise.all([
         fetchAo3Incidents(),
@@ -144,19 +178,16 @@ export async function pollAndNotify(client) {
             console.log(`AO3 status changed with no incident published: -> ${componentStatus}`);
             embedsToSend.push(buildGenericStatusEmbed(componentStatus));
         }
+        const failed = new Map();
         for (const embed of embedsToSend) {
             for (const { guildId, channelId } of targets) {
-                // Skip guilds this shard doesn't own.
-                const guild = client.guilds.cache.get(guildId);
-                if (!guild)
+                if (await sendAlert(client, guildId, channelId, embed))
                     continue;
-                const channel = guild.channels.cache.get(channelId);
-                if (!channel || !channel.isTextBased())
-                    continue;
-                await channel.send({ embeds: [embed] }).catch((error) => {
-                    console.error(`Failed to send outage alert to guild ${guildId} channel ${channelId}`, error);
-                });
+                failed.set(guildId, [...(failed.get(guildId) ?? []), embed]);
             }
+        }
+        if (failed.size > 0) {
+            setTimeout(() => void retryFailedAlerts(client, failed), RETRY_DELAY_MS);
         }
     }
     // Mark as posted only once sending is done.
