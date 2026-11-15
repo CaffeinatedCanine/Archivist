@@ -75,6 +75,11 @@ const LENGTH_PREFIX = "length";
 const BLOCKED_TAGS_INPUT_ID = "blockedTags";
 const IGNORE_CHAR_INPUT_ID = "ignoreChar";
 const OUTAGE_CHANNEL_INPUT_ID = "outageChannel";
+const OUTAGE_CHANNEL_PERMISSIONS = [
+  PermissionFlagsBits.ViewChannel,
+  PermissionFlagsBits.SendMessages,
+  PermissionFlagsBits.EmbedLinks,
+];
 const DEFAULT_TAB_INPUT_ID = "defaultTab";
 const LIST_RESET_INPUT_ID = "listReset";
 const LIST_RESET_OPTION_VALUE = "enabled";
@@ -826,6 +831,7 @@ export async function handleSettingsPanelModalSubmit(
     await setFieldMaxLengths(interaction.guildId!, categoryKey, lengths);
   }
 
+  let outageChannelWarning: string | undefined;
   if (categoryKey === "general") {
     await setIgnoreChar(
       interaction.guildId!,
@@ -835,9 +841,24 @@ export async function handleSettingsPanelModalSubmit(
     const selectedChannel = interaction.fields
       .getSelectedChannels(OUTAGE_CHANNEL_INPUT_ID, false)
       ?.first();
-    await updateGuildSettings(interaction.guildId!, {
-      outageAlertChannelId: selectedChannel?.id ?? null,
-    });
+    // Without these the alert fails at send time with only a console error, so the channel is refused here.
+    const missingPermissions =
+      (selectedChannel &&
+        interaction.guild?.channels.cache
+          .get(selectedChannel.id)
+          ?.permissionsFor(interaction.client.user)
+          ?.missing(OUTAGE_CHANNEL_PERMISSIONS)) ||
+      [];
+    if (missingPermissions.length > 0) {
+      const names = missingPermissions
+        .map((name) => `**${name.replace(/([a-z])([A-Z])/g, "$1 $2")}**`)
+        .join(", ");
+      outageChannelWarning = `The outage alert channel was not changed: I'm missing ${names} in <#${selectedChannel!.id}>. Give me those permissions there and pick the channel again.`;
+    } else {
+      await updateGuildSettings(interaction.guildId!, {
+        outageAlertChannelId: selectedChannel?.id ?? null,
+      });
+    }
   }
 
   if (DEFAULT_TAB_OPTIONS[categoryKey]) {
@@ -882,6 +903,13 @@ export async function handleSettingsPanelModalSubmit(
     }
   } else {
     await refreshPanel(interaction, groupIndex);
+  }
+
+  if (outageChannelWarning) {
+    await interaction.followUp({
+      content: outageChannelWarning,
+      flags: MessageFlags.Ephemeral,
+    });
   }
 
   return true;
